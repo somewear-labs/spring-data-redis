@@ -84,4 +84,5 @@ public interface ReactivePubSubCommands {
 	 */
 	Mono<Void> pSubscribe(ByteBuffer... patterns);
 
+	Mono<Long> numSub(ByteBuffer channel);
 }

@@ -224,6 +224,16 @@ public class ReactiveRedisTemplate<K, V> implements ReactiveRedisOperations<K, V
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.core.ReactiveRedisOperations#numberOfSubscriptions(java.lang.String, java.lang.Object)
+	 */
+	@Override
+	public Mono<Long> numberOfSubscriptions(Topic topic) {
+		return createMono(connection -> connection.pubSubCommands().numSub(
+				getSerializationContext().getStringSerializationPair().write(topic.getTopic())));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.core.ReactiveRedisOperations#listenTo(org.springframework.data.redis.listener.Topic[])
 	 */
 	@Override
