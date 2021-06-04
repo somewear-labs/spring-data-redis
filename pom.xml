@@ -316,4 +316,11 @@
 			<url>https://repo.spring.io/plugins-release</url>
 		</pluginRepository>
 	</pluginRepositories>
+
+	<distributionManagement>
+		<repository>
+			<id>somewear-artifacts</id>
+			<url>https://somewear-artifacts.appspot.com</url>
+		</repository>
+	</distributionManagement>
 </project>
