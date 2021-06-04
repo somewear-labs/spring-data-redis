@@ -116,6 +116,8 @@ public interface ReactiveRedisOperations<K, V> {
 	 */
 	Flux<? extends Message<String, V>> listenTo(Topic... topics);
 
+	Mono<Long> numberOfSubscriptions(Topic topic);
+
 	// -------------------------------------------------------------------------
 	// Methods dealing with Redis Keys
 	// -------------------------------------------------------------------------
