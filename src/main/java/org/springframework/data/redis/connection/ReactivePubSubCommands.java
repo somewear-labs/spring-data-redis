@@ -19,6 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.reactivestreams.Publisher;
 import org.springframework.data.redis.connection.ReactiveSubscription.ChannelMessage;
@@ -84,5 +85,5 @@ public interface ReactivePubSubCommands {
 	 */
 	Mono<Void> pSubscribe(ByteBuffer... patterns);
 
-	Mono<Long> numSub(ByteBuffer channel);
+	Mono<Map<ByteBuffer, Long>> numSub(ByteBuffer... channels);
 }
