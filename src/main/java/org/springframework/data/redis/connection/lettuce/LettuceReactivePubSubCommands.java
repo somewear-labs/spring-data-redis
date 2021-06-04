@@ -92,6 +92,14 @@ class LettuceReactivePubSubCommands implements ReactivePubSubCommands {
 		return doWithPubSub(commands -> commands.psubscribe(patterns));
 	}
 
+	@Override
+	public Mono<Long> numSub(ByteBuffer channel) {
+
+		Assert.notNull(channel, "Channel must not be null!");
+
+		return doWithPubSub(commands -> commands.pubsubNumsub(channel).map(result -> result.get(channel)));
+	}
+
 	private <T> Mono<T> doWithPubSub(Function<RedisPubSubReactiveCommands<ByteBuffer, ByteBuffer>, Mono<T>> function) {
 
 		return connection.getPubSubConnection().flatMap(pubSubConnection -> function.apply(pubSubConnection.reactive()))

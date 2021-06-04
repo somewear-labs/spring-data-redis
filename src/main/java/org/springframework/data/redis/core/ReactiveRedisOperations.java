@@ -175,6 +175,8 @@ public interface ReactiveRedisOperations<K, V> {
 	 *      RedisSerializationContext.SerializationPair, RedisSerializationContext.SerializationPair)
 	 */
 	Mono<Flux<? extends Message<String, V>>> listenToLater(Topic... topics);
+	
+	Mono<Long> numberOfSubscriptions(Topic topic);
 
 	// -------------------------------------------------------------------------
 	// Methods dealing with Redis Keys
