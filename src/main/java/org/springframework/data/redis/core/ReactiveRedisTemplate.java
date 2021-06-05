@@ -15,6 +15,8 @@
  */
 package org.springframework.data.redis.core;
 
+import lombok.val;
+import org.springframework.data.redis.listener.ChannelTopic;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,7 +26,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.reactivestreams.Publisher;
 
@@ -220,6 +226,21 @@ public class ReactiveRedisTemplate<K, V> implements ReactiveRedisOperations<K, V
 		return createMono(connection -> connection.pubSubCommands().publish(
 				getSerializationContext().getStringSerializationPair().write(destination),
 				getSerializationContext().getValueSerializationPair().write(message)));
+	}
+
+	@Override
+	public Mono<Map<String, Long>> numberOfSubscriptions(String... channels) {
+		RedisSerializationContext.SerializationPair<String> serializationPair = getSerializationContext().getStringSerializationPair();
+
+		ByteBuffer[] serializedTopics = Arrays.stream(channels)
+				.map(serializationPair::write)
+				.toArray(ByteBuffer[]::new);
+
+		return createMono(connection -> connection.pubSubCommands()
+				.numSub(serializedTopics)
+				.map(result -> result.entrySet().stream()
+						.collect(Collectors.toMap(e -> serializationPair.read(e.getKey()), Map.Entry::getValue))
+				));
 	}
 
 	/*

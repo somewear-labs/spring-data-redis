@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.reactivestreams.Publisher;
 import org.springframework.data.redis.connection.DataType;
@@ -115,6 +116,8 @@ public interface ReactiveRedisOperations<K, V> {
 	 * @since 2.1
 	 */
 	Flux<? extends Message<String, V>> listenTo(Topic... topics);
+
+	Mono<Map<String, Long>> numberOfSubscriptions(String... channels);
 
 	// -------------------------------------------------------------------------
 	// Methods dealing with Redis Keys

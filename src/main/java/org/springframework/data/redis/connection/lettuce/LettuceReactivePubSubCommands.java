@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
@@ -87,6 +88,14 @@ class LettuceReactivePubSubCommands implements ReactivePubSubCommands {
 		Assert.notNull(patterns, "Patterns must not be null!");
 
 		return doWithPubSub(commands -> commands.psubscribe(patterns));
+	}
+
+	@Override
+	public Mono<Map<ByteBuffer, Long>> numSub(ByteBuffer... channels) {
+
+		Assert.notNull(channels, "Channels must not be null!");
+
+		return doWithPubSub(commands -> commands.pubsubNumsub(channels));
 	}
 
 	private <T> Mono<T> doWithPubSub(Function<RedisPubSubReactiveCommands<ByteBuffer, ByteBuffer>, Mono<T>> function) {
