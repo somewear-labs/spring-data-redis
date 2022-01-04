@@ -15,8 +15,6 @@
  */
 package org.springframework.data.redis.core;
 
-import lombok.val;
-import org.springframework.data.redis.listener.ChannelTopic;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -27,10 +25,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.reactivestreams.Publisher;
 
