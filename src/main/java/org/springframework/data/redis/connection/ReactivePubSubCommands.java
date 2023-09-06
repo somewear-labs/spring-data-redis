@@ -19,6 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 
 import org.reactivestreams.Publisher;
@@ -99,4 +100,8 @@ public interface ReactivePubSubCommands {
 	Mono<Void> pSubscribe(ByteBuffer... patterns);
 
 	Mono<Map<ByteBuffer, Long>> numSub(ByteBuffer... channels);
+
+	Mono<List<ByteBuffer>> channels();
+
+	Mono<List<ByteBuffer>> channels(ByteBuffer pattern);
 }
