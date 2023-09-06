@@ -292,6 +292,18 @@ public class ReactiveRedisTemplate<K, V> implements ReactiveRedisOperations<K, V
 				));
 	}
 
+	@Override
+	public Mono<List<String>> channels() {
+		return doCreateMono(connection -> connection.pubSubCommands().channels())
+				.map(list -> list.stream().map(this::stringFromBuffer).collect(Collectors.toList()));
+	}
+
+	@Override
+	public Mono<List<String>> channels(String pattern) {
+		return doCreateMono(connection -> connection.pubSubCommands().channels(bufferFromString(pattern)))
+				.map(list -> list.stream().map(this::stringFromBuffer).collect(Collectors.toList()));
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.core.ReactiveRedisOperations#listenTo(org.springframework.data.redis.listener.Topic[])
@@ -843,5 +855,13 @@ public class ReactiveRedisTemplate<K, V> implements ReactiveRedisOperations<K, V
 
 	private K readKey(ByteBuffer buffer) {
 		return getSerializationContext().getKeySerializationPair().getReader().read(buffer);
+	}
+
+	private ByteBuffer bufferFromString(String key) {
+		return getSerializationContext().getStringSerializationPair().getWriter().write(key);
+	}
+
+	private String stringFromBuffer(ByteBuffer buffer) {
+		return getSerializationContext().getStringSerializationPair().getReader().read(buffer);
 	}
 }

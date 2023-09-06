@@ -179,6 +179,10 @@ public interface ReactiveRedisOperations<K, V> {
 
 	Mono<Map<String, Long>> numberOfSubscriptions(String... channels);
 
+	Mono<List<String>> channels();
+
+	Mono<List<String>> channels(String pattern);
+
 	// -------------------------------------------------------------------------
 	// Methods dealing with Redis Keys
 	// -------------------------------------------------------------------------
