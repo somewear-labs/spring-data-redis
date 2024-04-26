@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class JedisConnectionFactoryExtension implements ParameterResolver {
 			.create(JedisConnectionFactoryExtension.class);
 
 	private static final JedisClientConfiguration CLIENT_CONFIGURATION = JedisClientConfiguration.builder()
-			.clientName("jedis-client").usePooling().build();
+			.clientName("jedis-client").build();
 
 	private static final NewableLazy<JedisConnectionFactory> STANDALONE = NewableLazy.of(() -> {
 

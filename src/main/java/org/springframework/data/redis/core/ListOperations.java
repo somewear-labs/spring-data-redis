@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -388,6 +388,7 @@ public interface ListOperations<K, V> {
 	 * @since 2.4
 	 * @see <a href="https://redis.io/commands/lpos">Redis Documentation: LPOS</a>
 	 */
+	@Nullable
 	Long indexOf(K key, V value);
 
 	/**
@@ -400,6 +401,7 @@ public interface ListOperations<K, V> {
 	 * @since 2.4
 	 * @see <a href="https://redis.io/commands/lpos">Redis Documentation: LPOS</a>
 	 */
+	@Nullable
 	Long lastIndexOf(K key, V value);
 
 	/**
@@ -523,7 +525,7 @@ public interface ListOperations<K, V> {
 	V rightPopAndLeftPush(K sourceKey, K destinationKey);
 
 	/**
-	 * Remove the last element from list at {@code srcKey}, append it to {@code dstKey} and return its value.<br>
+	 * Remove the last element from list at {@code sourceKey}, append it to {@code destinationKey} and return its value.<br>
 	 * <b>Blocks connection</b> until element available or {@code timeout} reached.
 	 *
 	 * @param sourceKey must not be {@literal null}.
@@ -537,7 +539,7 @@ public interface ListOperations<K, V> {
 	V rightPopAndLeftPush(K sourceKey, K destinationKey, long timeout, TimeUnit unit);
 
 	/**
-	 * Remove the last element from list at {@code srcKey}, append it to {@code dstKey} and return its value.<br>
+	 * Remove the last element from list at {@code sourceKey}, append it to {@code destinationKey} and return its value.<br>
 	 * <b>Blocks connection</b> until element available or {@code timeout} reached.
 	 *
 	 * @param sourceKey must not be {@literal null}.

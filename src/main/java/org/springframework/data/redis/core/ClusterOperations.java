@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.springframework.data.redis.connection.RedisClusterCommands;
 import org.springframework.data.redis.connection.RedisClusterNode;
 import org.springframework.data.redis.connection.RedisClusterNode.SlotRange;
 import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 
 /**
  * Redis operations for cluster specific operations. A {@link RedisClusterNode} can be obtained from
@@ -31,6 +32,7 @@ import org.springframework.data.redis.connection.RedisConnection;
  *
  * @author Christoph Strobl
  * @author Mark Paluch
+ * @author Dennis Neufeld
  * @since 1.7
  */
 public interface ClusterOperations<K, V> {
@@ -116,6 +118,16 @@ public interface ClusterOperations<K, V> {
 	 * @see RedisConnection#flushDb()
 	 */
 	void flushDb(RedisClusterNode node);
+
+	/**
+	 * Flush db on node using the specified {@link FlushOption}.
+	 *
+	 * @param node must not be {@literal null}.
+	 * @param option must not be {@literal null}.
+	 * @see RedisConnection#flushDb(FlushOption)
+	 * @since 2.7
+	 */
+	void flushDb(RedisClusterNode node, FlushOption option);
 
 	/**
 	 * @param node must not be {@literal null}.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.springframework.data.redis.connection;
 import java.util.Arrays;
 
 import org.springframework.data.redis.connection.RedisZSetCommands.Tuple;
+
+import org.springframework.lang.Nullable;
 
 /**
  * Default implementation for {@link Tuple} interface.
@@ -58,7 +60,7 @@ public class DefaultTuple implements Tuple {
 		return value;
 	}
 
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

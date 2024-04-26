@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2021 the original author or authors.
+ * Copyright 2014-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.springframework.util.ObjectUtils;
  * @author David Liu
  * @author Ninad Divadkar
  * @author Mark Paluch
+ * @author Dennis Neufeld
  */
 class RedisConnectionUnitTests {
 
@@ -433,6 +434,10 @@ class RedisConnectionUnitTests {
 			delegate.flushDb();
 		}
 
+		public void flushDb(FlushOption option) {
+			delegate.flushDb(option);
+		}
+
 		public Boolean sIsMember(byte[] key, byte[] value) {
 			return delegate.sIsMember(key, value);
 		}
@@ -455,6 +460,10 @@ class RedisConnectionUnitTests {
 
 		public void flushAll() {
 			delegate.flushAll();
+		}
+
+		public void flushAll(FlushOption option) {
+			delegate.flushAll(option);
 		}
 
 		public void lTrim(byte[] key, long begin, long end) {

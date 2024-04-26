@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.data.redis.connection.RedisClusterCommands.AddSlots;
 import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisClusterNode;
 import org.springframework.data.redis.connection.RedisClusterNode.SlotRange;
+import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 import org.springframework.data.redis.connection.RedisServerCommands.MigrateOption;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -31,6 +32,7 @@ import org.springframework.util.Assert;
  * Default {@link ClusterOperations} implementation.
  *
  * @author Christoph Strobl
+ * @author Dennis Neufeld
  * @since 1.7
  * @param <K>
  * @param <V>
@@ -55,7 +57,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#keys(org.springframework.data.redis.connection.RedisNode, byte[])
 	 */
 	@Override
-	public Set<K> keys(final RedisClusterNode node, final K pattern) {
+	public Set<K> keys(RedisClusterNode node, K pattern) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -67,7 +69,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#randomKey(org.springframework.data.redis.connection.RedisNode)
 	 */
 	@Override
-	public K randomKey(final RedisClusterNode node) {
+	public K randomKey(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -79,7 +81,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#ping(org.springframework.data.redis.connection.RedisNode)
 	 */
 	@Override
-	public String ping(final RedisClusterNode node) {
+	public String ping(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -91,7 +93,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#addSlots(org.springframework.data.redis.connection.RedisClusterNode, int[])
 	 */
 	@Override
-	public void addSlots(final RedisClusterNode node, final int... slots) {
+	public void addSlots(RedisClusterNode node, int... slots) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -119,7 +121,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#bgReWriteAof(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public void bgReWriteAof(final RedisClusterNode node) {
+	public void bgReWriteAof(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -134,7 +136,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#bgSave(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public void bgSave(final RedisClusterNode node) {
+	public void bgSave(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -149,7 +151,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#meet(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public void meet(final RedisClusterNode node) {
+	public void meet(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -164,7 +166,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#forget(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public void forget(final RedisClusterNode node) {
+	public void forget(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -179,7 +181,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#flushDb(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public void flushDb(final RedisClusterNode node) {
+	public void flushDb(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -191,10 +193,25 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.core.ClusterOperations#flushDb(org.springframework.data.redis.connection.RedisClusterNode, org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushDb(RedisClusterNode node, FlushOption option) {
+
+		Assert.notNull(node, "ClusterNode must not be null.");
+
+		doInCluster((RedisClusterCallback<Void>) connection -> {
+			connection.flushDb(node, option);
+			return null;
+		});
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#getSlaves(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public Collection<RedisClusterNode> getSlaves(final RedisClusterNode node) {
+	public Collection<RedisClusterNode> getSlaves(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -206,7 +223,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#save(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public void save(final RedisClusterNode node) {
+	public void save(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -221,7 +238,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.RedisClusterOperations#shutdown(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public void shutdown(final RedisClusterNode node) {
+	public void shutdown(RedisClusterNode node) {
 
 		Assert.notNull(node, "ClusterNode must not be null.");
 
@@ -236,7 +253,7 @@ class DefaultClusterOperations<K, V> extends AbstractOperations<K, V> implements
 	 * @see org.springframework.data.redis.core.ClusterOperations#reshard(org.springframework.data.redis.connection.RedisClusterNode, int, org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
-	public void reshard(final RedisClusterNode source, final int slot, final RedisClusterNode target) {
+	public void reshard(RedisClusterNode source, int slot, RedisClusterNode target) {
 
 		Assert.notNull(source, "Source node must not be null.");
 		Assert.notNull(target, "Target node must not be null.");

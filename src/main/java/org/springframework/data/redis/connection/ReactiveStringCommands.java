@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 the original author or authors.
+ * Copyright 2016-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -349,7 +349,8 @@ public interface ReactiveStringCommands {
 	Flux<ByteBufferResponse<SetCommand>> getSet(Publisher<SetCommand> commands);
 
 	/**
-	 * Get multiple values in one batch.
+	 * Get multiple values in one batch. Values are in the order of the requested keys. Absent field values are
+	 * represented using {@code null} in the resulting {@link List}.
 	 *
 	 * @param keys must not be {@literal null}.
 	 * @return
@@ -363,7 +364,8 @@ public interface ReactiveStringCommands {
 	}
 
 	/**
-	 * Get multiple values at for {@literal keysets} in batches.
+	 * Get multiple values at for {@literal keysets} in batches. Values are in the order of the requested keys. Absent
+	 * field values are represented using {@code null} in the resulting {@link List}.
 	 *
 	 * @param keysets must not be {@literal null}.
 	 * @return

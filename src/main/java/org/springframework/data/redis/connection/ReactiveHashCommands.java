@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 the original author or authors.
+ * Copyright 2016-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,11 +283,13 @@ public interface ReactiveHashCommands {
 	 * @see <a href="https://redis.io/commands/hget">Redis Documentation: HGET</a>
 	 */
 	default Mono<ByteBuffer> hGet(ByteBuffer key, ByteBuffer field) {
-		return hMGet(key, Collections.singletonList(field)).flatMapIterable(Function.identity()).next();
+		return hMGet(key, Collections.singletonList(field)).filter(it -> !it.contains(null))
+				.flatMapIterable(Function.identity()).next();
 	}
 
 	/**
-	 * Get values for given {@literal fields} from hash at {@literal key}.
+	 * Get values for given {@literal fields} from hash at {@literal key}. Values are in the order of the requested keys.
+	 * Absent field values are represented using {@code null} in the resulting {@link List}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @param fields must not be {@literal null}.
@@ -303,7 +305,8 @@ public interface ReactiveHashCommands {
 	}
 
 	/**
-	 * Get values for given {@literal fields} from hash at {@literal key}.
+	 * Get values for given {@literal fields} from hash at {@literal key}. Values are in the order of the requested keys.
+	 * Absent field values are represented using {@code null} in the resulting {@link List}.
 	 *
 	 * @param commands must not be {@literal null}.
 	 * @return
@@ -562,7 +565,7 @@ public interface ReactiveHashCommands {
 	}
 
 	/**
-	 * Return a random field from the hash value stored at {@code key}.
+	 * Return a random field from the hash stored at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @return
@@ -577,7 +580,7 @@ public interface ReactiveHashCommands {
 	}
 
 	/**
-	 * Return a random field from the hash value stored at {@code key}.
+	 * Return a random field from the hash along with its value stored at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @return
@@ -593,10 +596,10 @@ public interface ReactiveHashCommands {
 	}
 
 	/**
-	 * Return a random field from the hash value stored at {@code key}. If the provided {@code count} argument is
-	 * positive, return a list of distinct fields, capped either at {@code count} or the hash size. If {@code count} is
-	 * negative, the behavior changes and the command is allowed to return the same field multiple times. In this case,
-	 * the number of returned fields is the absolute value of the specified count.
+	 * Return a random field from the hash stored at {@code key}. If the provided {@code count} argument is positive,
+	 * return a list of distinct fields, capped either at {@code count} or the hash size. If {@code count} is negative,
+	 * the behavior changes and the command is allowed to return the same field multiple times. In this case, the number
+	 * of returned fields is the absolute value of the specified count.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @param count number of fields to return.
@@ -612,10 +615,10 @@ public interface ReactiveHashCommands {
 	}
 
 	/**
-	 * Return a random field from the hash value stored at {@code key}. If the provided {@code count} argument is
-	 * positive, return a list of distinct fields, capped either at {@code count} or the hash size. If {@code count} is
-	 * negative, the behavior changes and the command is allowed to return the same field multiple times. In this case,
-	 * the number of returned fields is the absolute value of the specified count.
+	 * Return a random field from the hash along with its value stored at {@code key}. If the provided {@code count}
+	 * argument is positive, return a list of distinct fields, capped either at {@code count} or the hash size. If
+	 * {@code count} is negative, the behavior changes and the command is allowed to return the same field multiple times.
+	 * In this case, the number of returned fields is the absolute value of the specified count.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @param count number of fields to return.

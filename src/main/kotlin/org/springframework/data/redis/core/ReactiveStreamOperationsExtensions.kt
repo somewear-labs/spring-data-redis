@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,14 +256,34 @@ fun <K : Any, HK : Any, HV : Any> ReactiveStreamOperations<K, HK, HV>.reverseRan
  * @author Sebastien Deleuze
  * @since 2.2
  */
-inline fun <K : Any, reified V : Any> ReactiveStreamOperations<K, *, *>.reverseRangeWithTypeAsFlow(key: K, range: Range<String>, limit: Limit = Limit.unlimited()): Flow<ObjectRecord<K, V>> =
-		reverseRange(V::class.java, key, range, limit).asFlow()
+inline fun <K : Any, reified V : Any> ReactiveStreamOperations<K, *, *>.reverseRangeWithTypeAsFlow(
+	key: K,
+	range: Range<String>,
+	limit: Limit = Limit.unlimited()
+): Flow<ObjectRecord<K, V>> =
+	reverseRange(V::class.java, key, range, limit).asFlow()
 
 /**
  * Coroutines variant of [ReactiveStreamOperations.trim].
  *
- * @author Mark Paluch
- * @since 2.2
+ * @author Quantum64
+ * @since 2.7.4
  */
-suspend fun <K : Any, HK : Any, HV : Any> ReactiveStreamOperations<K, HK, HV>.trimAndAwait(key: K, count: Long): Long =
-		trim(key, count).awaitSingle()
+suspend fun <K : Any, HK : Any, HV : Any> ReactiveStreamOperations<K, HK, HV>.trimAndAwait(
+	key: K,
+	count: Long
+): Long =
+	trim(key, count).awaitSingle()
+
+/**
+ * Coroutines variant of [ReactiveStreamOperations.trim].
+ *
+ * @author Quantum64
+ * @since 2.7.4
+ */
+suspend fun <K : Any, HK : Any, HV : Any> ReactiveStreamOperations<K, HK, HV>.trimAndAwait(
+	key: K,
+	count: Long,
+	approximateTrimming: Boolean
+): Long =
+	trim(key, count, approximateTrimming).awaitSingle()

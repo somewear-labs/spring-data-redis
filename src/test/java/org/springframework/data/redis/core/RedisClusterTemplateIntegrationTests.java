@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.springframework.data.redis.core;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assumptions.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -139,6 +140,14 @@ public class RedisClusterTemplateIntegrationTests<K, V> extends RedisTemplateInt
 	@Disabled("This one fails when using GET options on numbers")
 	public void testGetExpireMillisUsingPipelining() {
 		super.testGetExpireMillisUsingPipelining();
+	}
+
+	@ParameterizedRedisTest
+	void testScan() {
+
+		// Only Lettuce supports cluster-wide scanning
+		assumeThat(redisTemplate.getConnectionFactory()).isInstanceOf(LettuceConnectionFactory.class);
+		super.testScan();
 	}
 
 	@Parameters

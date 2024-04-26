@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 the original author or authors.
+ * Copyright 2016-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,12 @@
  */
 package org.springframework.data.redis.mapping;
 
+import static org.assertj.core.api.Assertions.*;
+
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -40,25 +44,12 @@ import org.springframework.data.redis.hash.Jackson2HashMapper;
  * @author Christoph Strobl
  * @author Mark Paluch
  */
-public abstract class Jackson2HashMapperUnitTests extends AbstractHashMapperTests {
+abstract class Jackson2HashMapperUnitTests extends AbstractHashMapperTests {
 
 	private final Jackson2HashMapper mapper;
 
 	Jackson2HashMapperUnitTests(Jackson2HashMapper mapper) {
 		this.mapper = mapper;
-	}
-
-	static class FlatteningJackson2HashMapperUnitTests extends Jackson2HashMapperUnitTests {
-		FlatteningJackson2HashMapperUnitTests() {
-			super(new Jackson2HashMapper(true));
-		}
-	}
-
-	static class NonFlatteningJackson2HashMapperUnitTests extends Jackson2HashMapperUnitTests {
-
-		NonFlatteningJackson2HashMapperUnitTests() {
-			super(new Jackson2HashMapper(false));
-		}
 	}
 
 	@Override
@@ -183,6 +174,51 @@ public abstract class Jackson2HashMapperUnitTests extends AbstractHashMapperTest
 		assertBackAndForwardMapping(source);
 	}
 
+	@Test // GH-2198
+	void shouldDeserializeObjectWithoutClassHint() {
+
+		WithDates source = new WithDates();
+		source.string = "id-1";
+		source.date = new Date(1561543964015L);
+		source.calendar = Calendar.getInstance();
+		source.localDate = LocalDate.parse("2018-01-02");
+		source.localDateTime = LocalDateTime.parse("2018-01-02T12:13:14");
+
+		Map<String, Object> map = mapper.toHash(source);
+
+		// ensure that we remove the correct type hint
+		assertThat(map.remove("@class")).isNotNull();
+
+		assertThat(mapper.fromHash(WithDates.class, map)).isEqualTo(source);
+	}
+
+	@Test // GH-1566
+	void mapFinalClass() {
+
+		MeFinal source = new MeFinal();
+		source.value = "id-1";
+
+		assertBackAndForwardMapping(source);
+	}
+
+	@Test // GH-2365
+	void bigIntegerShouldBeTreatedCorrectly() {
+
+		WithBigWhatever source = new WithBigWhatever();
+		source.bigI = BigInteger.TEN;
+
+		assertBackAndForwardMapping(source);
+	}
+
+	@Test // GH-2365
+	void bigDecimalShouldBeTreatedCorrectly() {
+
+		WithBigWhatever source = new WithBigWhatever();
+		source.bigD = BigDecimal.ONE;
+
+		assertBackAndForwardMapping(source);
+	}
+
 	@Data
 	public static class WithList {
 		List<String> strings;
@@ -205,5 +241,16 @@ public abstract class Jackson2HashMapperUnitTests extends AbstractHashMapperTest
 		private Calendar calendar;
 		private LocalDate localDate;
 		private LocalDateTime localDateTime;
+	}
+
+	@Data
+	private static class WithBigWhatever {
+		private BigDecimal bigD;
+		private BigInteger bigI;
+	}
+
+	@Data
+	public static final class MeFinal {
+		private String value;
 	}
 }

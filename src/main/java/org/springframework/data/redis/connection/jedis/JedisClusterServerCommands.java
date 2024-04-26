@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.springframework.util.CollectionUtils;
 
 /**
  * @author Mark Paluch
+ * @author Dennis Neufeld
  * @since 2.0
  */
 class JedisClusterServerCommands implements RedisClusterServerCommands {
@@ -173,11 +174,29 @@ class JedisClusterServerCommands implements RedisClusterServerCommands {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.RedisServerCommands#flushDb(org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushDb(FlushOption option) {
+		executeCommandOnAllNodes(it -> it.flushDB(JedisConverters.toFlushMode(option)));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.connection.RedisClusterServerCommands#flushDb(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
 	public void flushDb(RedisClusterNode node) {
 		executeCommandOnSingleNode(BinaryJedis::flushDB, node);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.RedisClusterServerCommands#flushDb(org.springframework.data.redis.connection.RedisClusterNode, org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushDb(RedisClusterNode node, FlushOption option) {
+		executeCommandOnSingleNode(it -> it.flushDB(JedisConverters.toFlushMode(option)), node);
 	}
 
 	/*
@@ -192,11 +211,31 @@ class JedisClusterServerCommands implements RedisClusterServerCommands {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.RedisServerCommands#flushAll(org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushAll(FlushOption option) {
+		connection.getClusterCommandExecutor()
+				.executeCommandOnAllNodes(
+						(JedisClusterCommandCallback<String>) it -> it.flushAll(JedisConverters.toFlushMode(option)));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.connection.RedisClusterServerCommands#flushAll(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
 	public void flushAll(RedisClusterNode node) {
 		executeCommandOnSingleNode(BinaryJedis::flushAll, node);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.RedisClusterServerCommands#flushAll(org.springframework.data.redis.connection.RedisClusterNode, org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushAll(RedisClusterNode node, FlushOption option) {
+		executeCommandOnSingleNode(it -> it.flushAll(JedisConverters.toFlushMode(option)), node);
 	}
 
 	/*
@@ -416,8 +455,9 @@ class JedisClusterServerCommands implements RedisClusterServerCommands {
 	@Override
 	public Long time(TimeUnit timeUnit) {
 
-		return convertListOfStringToTime(connection.getClusterCommandExecutor()
-				.executeCommandOnArbitraryNode((JedisClusterCommandCallback<List<String>>) BinaryJedis::time).getValue(),
+		return convertListOfStringToTime(
+				connection.getClusterCommandExecutor()
+						.executeCommandOnArbitraryNode((JedisClusterCommandCallback<List<String>>) BinaryJedis::time).getValue(),
 				timeUnit);
 	}
 
@@ -428,8 +468,9 @@ class JedisClusterServerCommands implements RedisClusterServerCommands {
 	@Override
 	public Long time(RedisClusterNode node, TimeUnit timeUnit) {
 
-		return convertListOfStringToTime(connection.getClusterCommandExecutor()
-				.executeCommandOnSingleNode((JedisClusterCommandCallback<List<String>>) BinaryJedis::time, node).getValue(),
+		return convertListOfStringToTime(
+				connection.getClusterCommandExecutor()
+						.executeCommandOnSingleNode((JedisClusterCommandCallback<List<String>>) BinaryJedis::time, node).getValue(),
 				timeUnit);
 	}
 
@@ -555,4 +596,5 @@ class JedisClusterServerCommands implements RedisClusterServerCommands {
 	private <T> MultiNodeResult<T> executeCommandOnAllNodes(JedisClusterCommandCallback<T> cmd) {
 		return connection.getClusterCommandExecutor().executeCommandOnAllNodes(cmd);
 	}
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2021-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,17 +79,10 @@ class JedisStreamCommands implements RedisStreamCommands {
 		Assert.notNull(record, "Record must not be null!");
 		Assert.notNull(record.getStream(), "Stream must not be null!");
 
-		XAddParams xAddParams = new XAddParams();
-		xAddParams.id(record.getId().getValue());
-		if (options.hasMaxlen()) {
-			xAddParams.maxLen(options.getMaxlen());
-		}
-		if (options.isNoMkStream()) {
-			xAddParams.noMkStream();
-		}
+		XAddParams params = StreamConverters.toXAddParams(record, options);
 
 		return connection.invoke()
-				.from(BinaryJedis::xadd, MultiKeyPipelineBase::xadd, record.getStream(), record.getValue(), xAddParams)
+				.from(BinaryJedis::xadd, MultiKeyPipelineBase::xadd, record.getStream(), record.getValue(), params)
 				.get(it -> RecordId.of(JedisConverters.toString(it)));
 	}
 

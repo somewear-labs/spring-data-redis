@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,31 +18,25 @@ package org.springframework.data.redis.support.collections;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.SessionCallback;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 /**
  * Utility class used mainly for type conversion by the default collection implementations. Meant for internal use.
  *
  * @author Costin Leau
+ * @author John Blum
  */
-abstract class CollectionUtils {
-
-	@SuppressWarnings("unchecked")
-	static <E> Collection<E> reverse(Collection<? extends E> c) {
-		Object[] reverse = new Object[c.size()];
-		int index = c.size();
-		for (E e : c) {
-			reverse[--index] = e;
-		}
-
-		return (List<E>) Arrays.asList(reverse);
-	}
+public abstract class CollectionUtils {
 
 	static Collection<String> extractKeys(Collection<? extends RedisStore> stores) {
+
 		Collection<String> keys = new ArrayList<>(stores.size());
 
 		for (RedisStore store : stores) {
@@ -52,10 +46,27 @@ abstract class CollectionUtils {
 		return keys;
 	}
 
+	public static <T> List<T> initializeList(@NonNull List<T> list, int size) {
+
+		for (int count = 0; count < size; count++) {
+			list.add(null);
+		}
+
+		return list;
+	}
+
+	@NonNull
+	public static <T> List<T> nullSafeList(@Nullable List<T> list) {
+		return list != null ? list : Collections.emptyList();
+	}
+
 	static <K> void rename(final K key, final K newKey, RedisOperations<K, ?> operations) {
+
 		operations.execute(new SessionCallback<Object>() {
+
 			@SuppressWarnings("unchecked")
 			public Object execute(RedisOperations operations) throws DataAccessException {
+
 				do {
 					operations.watch(key);
 
@@ -66,8 +77,22 @@ abstract class CollectionUtils {
 						operations.multi();
 					}
 				} while (operations.exec() == null);
+
 				return null;
 			}
 		});
+	}
+
+	@SuppressWarnings("unchecked")
+	static <E> Collection<E> reverse(Collection<? extends E> c) {
+
+		Object[] reverse = new Object[c.size()];
+		int index = c.size();
+
+		for (E e : c) {
+			reverse[--index] = e;
+		}
+
+		return (List<E>) Arrays.asList(reverse);
 	}
 }

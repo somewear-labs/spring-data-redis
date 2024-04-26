@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ErrorHandler;
 import org.springframework.util.ObjectUtils;
@@ -210,6 +211,10 @@ class DefaultStreamMessageListenerContainer<K, V extends Record<K, ?>> implement
 	 */
 	@Override
 	public Subscription register(StreamReadRequest<K> streamRequest, StreamListener<K, V> listener) {
+
+		Assert.notNull(streamRequest, "StreamReadRequest must not be null");
+		Assert.notNull(listener, "StreamListener must not be null");
+
 		return doRegister(getReadTask(streamRequest, listener));
 	}
 
@@ -345,7 +350,7 @@ class DefaultStreamMessageListenerContainer<K, V extends Record<K, ?>> implement
 		}
 
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(@Nullable Object o) {
 			if (this == o)
 				return true;
 			if (o == null || getClass() != o.getClass())

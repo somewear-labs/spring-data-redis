@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2021 the original author or authors.
+ * Copyright 2013-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,17 +131,18 @@ public class DefaultHashOperationsIntegrationTests<K, HK, HV> {
 		hashOps.put(key, key1, val1);
 		hashOps.put(key, key2, val2);
 
-		Cursor<Map.Entry<HK, HV>> it = hashOps.scan(key, ScanOptions.scanOptions().count(1).build());
 
 		long count = 0;
-		while (it.hasNext()) {
-			Map.Entry<HK, HV> entry = it.next();
-			assertThat(entry.getKey()).isIn(key1, key2);
-			assertThat(entry.getValue()).isIn(val1, val2);
-			count++;
+		try (Cursor<Map.Entry<HK, HV>> it = hashOps.scan(key, ScanOptions.scanOptions().count(1).build())) {
+
+			while (it.hasNext()) {
+				Map.Entry<HK, HV> entry = it.next();
+				assertThat(entry.getKey()).isIn(key1, key2);
+				assertThat(entry.getValue()).isIn(val1, val2);
+				count++;
+			}
 		}
 
-		it.close();
 		assertThat(count).isEqualTo(hashOps.size(key));
 	}
 

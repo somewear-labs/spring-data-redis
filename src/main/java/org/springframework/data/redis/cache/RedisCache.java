@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,17 +38,19 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
- * {@link org.springframework.cache.Cache} implementation using for Redis as underlying store.
+ * {@link org.springframework.cache.Cache} implementation using for Redis as the underlying store for cache data.
  * <p>
  * Use {@link RedisCacheManager} to create {@link RedisCache} instances.
  *
  * @author Christoph Strobl
  * @author Mark Paluch
  * @author Piotr Mionskowski
+ * @author John Blum
  * @see RedisCacheConfiguration
  * @see RedisCacheWriter
  * @since 2.0
  */
+@SuppressWarnings("unused")
 public class RedisCache extends AbstractValueAdaptingCache {
 
 	private static final byte[] BINARY_NULL_VALUE = RedisSerializer.java().serialize(NullValue.INSTANCE);
@@ -130,6 +132,7 @@ public class RedisCache extends AbstractValueAdaptingCache {
 		return getSynchronized(key, valueLoader);
 	}
 
+	@Nullable
 	@SuppressWarnings("unchecked")
 	private synchronized <T> T getSynchronized(Object key, Callable<T> valueLoader) {
 
@@ -396,5 +399,4 @@ public class RedisCache extends AbstractValueAdaptingCache {
 		// allow contextual cache names by computing the key prefix on every call.
 		return cacheConfig.getKeyPrefixFor(name) + key;
 	}
-
 }

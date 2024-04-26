@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2021 the original author or authors.
+ * Copyright 2014-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ class ConnectionSplittingInterceptorUnitTests {
 
 		interceptor.intercept(boundConnectionMock, READONLY_METHOD, new Object[] { new byte[] {} });
 		verify(connectionFactoryMock, times(1)).getConnection();
-		verifyZeroInteractions(boundConnectionMock);
+		verifyNoInteractions(boundConnectionMock);
 	}
 
 	@Test // DATAREDIS-73
@@ -79,7 +79,7 @@ class ConnectionSplittingInterceptorUnitTests {
 
 		interceptor.intercept(boundConnectionMock, WRITE_METHOD, new Object[] { new byte[] {}, 0L });
 		verify(boundConnectionMock, times(1)).expire(any(byte[].class), anyLong());
-		verifyZeroInteractions(connectionFactoryMock);
+		verifyNoInteractions(connectionFactoryMock);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.connection.ReactiveServerCommands;
+import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 import org.springframework.data.redis.core.types.RedisClientInfo;
 import org.springframework.data.redis.util.ByteUtils;
 import org.springframework.util.Assert;
@@ -34,6 +35,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Christoph Strobl
+ * @author Dennis Neufeld
  */
 class LettuceReactiveServerCommands implements ReactiveServerCommands {
 
@@ -108,11 +110,29 @@ class LettuceReactiveServerCommands implements ReactiveServerCommands {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.ReactiveServerCommands#flushDb(org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public Mono<String> flushDb(FlushOption option) {
+		return connection.execute(it -> it.flushdb(LettuceConverters.toFlushMode(option))).next();
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.connection.ReactiveServerCommands#flushAll()
 	 */
 	@Override
 	public Mono<String> flushAll() {
 		return connection.execute(RedisServerReactiveCommands::flushall).next();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.ReactiveServerCommands#flushAll(FlushOption)
+	 */
+	@Override
+	public Mono<String> flushAll(FlushOption option) {
+		return connection.execute(it -> it.flushall(LettuceConverters.toFlushMode(option))).next();
 	}
 
 	/*

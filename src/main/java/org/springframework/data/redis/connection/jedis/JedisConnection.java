@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ import java.util.Queue;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
@@ -59,6 +62,8 @@ import org.springframework.util.CollectionUtils;
  * @author Dengliming
  */
 public class JedisConnection extends AbstractRedisConnection {
+
+	private final Log LOGGER = LogFactory.getLog(getClass());
 
 	private static final ExceptionTranslationStrategy EXCEPTION_TRANSLATION = new FallbackExceptionTranslationStrategy(
 			JedisConverters.exceptionConverter());
@@ -331,25 +336,45 @@ public class JedisConnection extends AbstractRedisConnection {
 
 		super.close();
 
+		JedisSubscription subscription = this.subscription;
+		try {
+			if (subscription != null) {
+				subscription.close();
+			}
+		} catch (Exception ex) {
+			LOGGER.debug("Cannot terminate subscription", ex);
+		} finally {
+			this.subscription = null;
+		}
+
 		// return the connection to the pool
 		if (pool != null) {
 			jedis.close();
 			return;
 		}
+
 		// else close the connection normally (doing the try/catch dance)
-		Exception exc = null;
+
 		try {
 			jedis.quit();
 		} catch (Exception ex) {
-			exc = ex;
+			LOGGER.debug("Failed to QUIT during close", ex);
 		}
+
 		try {
 			jedis.disconnect();
 		} catch (Exception ex) {
-			exc = ex;
+			LOGGER.debug("Failed to disconnect during close", ex);
 		}
-		if (exc != null)
-			throw convertJedisAccessException(exc);
+	}
+
+	private Exception handleCloseException(@Nullable Exception exceptionToThrow, Exception cause) {
+
+		if (exceptionToThrow == null) {
+			return cause;
+		}
+
+		return exceptionToThrow;
 	}
 
 	/*

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package org.springframework.data.redis.connection.stream;
 
+import java.util.Map;
+
 /**
- * A {@link Record} within the stream backed by a collection of {@link String} {@literal field/value} paris.
+ * A {@link Record} within the stream backed by a collection of {@link String} {@literal field/value} pairs.
  *
  * @author Christoph Strobl
  * @since 2.2
@@ -37,6 +39,17 @@ public interface StringRecord extends MapRecord<String, String, String> {
 	 * @return a new {@link StringRecord}.
 	 */
 	StringRecord withStreamKey(String key);
+
+	/**
+	 * Create a {@link StringRecord} from a {@link Map} of {@link String strings}.
+	 *
+	 * @param source must not be {@literal null}.
+	 * @return new instance of {@link StringRecord}.
+	 * @since 2.7
+	 */
+	static StringRecord of(Map<String, String> source) {
+		return StreamRecords.newRecord().ofStrings(source);
+	}
 
 	/**
 	 * Convert a {@link MapRecord} of {@link String strings} into a {@link StringRecord}.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,21 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.util.ReflectionTestUtils.*;
 import static org.springframework.util.ObjectUtils.*;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import lombok.Data;
+
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.support.NullValue;
 
@@ -37,6 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
 import com.fasterxml.jackson.databind.jsontype.TypeResolverBuilder;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for {@link GenericJackson2JsonRedisSerializer}.
@@ -141,12 +152,181 @@ class GenericJackson2JsonRedisSerializerUnitTests {
 	void shouldSerializeNullValueWithCustomObjectMapper() {
 
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.enableDefaultTyping(DefaultTyping.NON_FINAL, As.PROPERTY);
+		mapper.enableDefaultTyping(DefaultTyping.EVERYTHING, As.PROPERTY);
 
 		GenericJackson2JsonRedisSerializer.registerNullValueSerializer(mapper, null);
 		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(mapper);
 
 		serializeAndDeserializeNullValue(serializer);
+	}
+
+	@Test // GH-1566
+	void deserializeShouldBeAbleToRestoreFinalObjectAfterSerialization() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		FinalObject source = new FinalObject();
+		source.longValue = 1L;
+		source.myArray = new int[] { 1, 2, 3 };
+		source.simpleObject = new SimpleObject(2L);
+
+		assertThat(serializer.deserialize(serializer.serialize(source))).isEqualTo(source);
+		assertThat(serializer.deserialize(
+				("{\"@class\":\"org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializerUnitTests$FinalObject\",\"longValue\":1,\"myArray\":[1,2,3],\n"
+						+ "\"simpleObject\":{\"@class\":\"org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializerUnitTests$SimpleObject\",\"longValue\":2}}")
+								.getBytes())).isEqualTo(source);
+	}
+
+	@Test // GH-2361
+	void shouldDeserializePrimitiveArrayWithoutTypeHint() {
+
+		GenericJackson2JsonRedisSerializer gs = new GenericJackson2JsonRedisSerializer();
+		CountAndArray result = (CountAndArray) gs.deserialize(
+				("{\"@class\":\"org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializerUnitTests$CountAndArray\", \"count\":1, \"available\":[0,1]}")
+						.getBytes());
+
+		assertThat(result.getCount()).isEqualTo(1);
+		assertThat(result.getAvailable()).containsExactly(0, 1);
+	}
+
+	@Test // GH-2361
+	void shouldDeserializePrimitiveWrapperArrayWithoutTypeHint() {
+
+		GenericJackson2JsonRedisSerializer gs = new GenericJackson2JsonRedisSerializer();
+		CountAndArray result = (CountAndArray) gs.deserialize(
+				("{\"@class\":\"org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializerUnitTests$CountAndArray\", \"count\":1, \"arrayOfPrimitiveWrapper\":[0,1]}")
+						.getBytes());
+
+		assertThat(result.getCount()).isEqualTo(1);
+		assertThat(result.getArrayOfPrimitiveWrapper()).containsExactly(0L, 1L);
+	}
+
+	@Test // GH-2361
+	void doesNotIncludeTypingForPrimitiveArrayWrappers() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		WithWrapperTypes source = new WithWrapperTypes();
+		source.primitiveWrapper = new AtomicReference<>();
+		source.primitiveArrayWrapper = new AtomicReference<>(new Integer[] { 200, 300 });
+		source.simpleObjectWrapper = new AtomicReference<>();
+
+		byte[] serializedValue = serializer.serialize(source);
+
+		assertThat(new String(serializedValue)) //
+				.contains("\"primitiveArrayWrapper\":[200,300]") //
+				.doesNotContain("\"[Ljava.lang.Integer;\"");
+
+		assertThat(serializer.deserialize(serializedValue)) //
+				.isInstanceOf(WithWrapperTypes.class) //
+				.satisfies(it -> {
+					WithWrapperTypes deserialized = (WithWrapperTypes) it;
+					assertThat(deserialized.primitiveArrayWrapper).hasValue(source.primitiveArrayWrapper.get());
+				});
+	}
+
+	@Test // GH-2361
+	void doesNotIncludeTypingForPrimitiveWrappers() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		WithWrapperTypes source = new WithWrapperTypes();
+		source.primitiveWrapper = new AtomicReference<>(123L);
+
+		byte[] serializedValue = serializer.serialize(source);
+
+		assertThat(new String(serializedValue)) //
+				.contains("\"primitiveWrapper\":123") //
+				.doesNotContain("\"Ljava.lang.Long;\"");
+
+		assertThat(serializer.deserialize(serializedValue)) //
+				.isInstanceOf(WithWrapperTypes.class) //
+				.satisfies(it -> {
+					WithWrapperTypes deserialized = (WithWrapperTypes) it;
+					assertThat(deserialized.primitiveWrapper).hasValue(source.primitiveWrapper.get());
+				});
+	}
+
+	@Test // GH-2361
+	void includesTypingForWrappedObjectTypes() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		SimpleObject simpleObject = new SimpleObject(100L);
+		WithWrapperTypes source = new WithWrapperTypes();
+		source.simpleObjectWrapper = new AtomicReference<>(simpleObject);
+
+		byte[] serializedValue = serializer.serialize(source);
+
+		assertThat(new String(serializedValue)) //
+				.contains(
+						"\"simpleObjectWrapper\":{\"@class\":\"org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializerUnitTests$SimpleObject\",\"longValue\":100}");
+
+		assertThat(serializer.deserialize(serializedValue)) //
+				.isInstanceOf(WithWrapperTypes.class) //
+				.satisfies(it -> {
+					WithWrapperTypes deserialized = (WithWrapperTypes) it;
+					assertThat(deserialized.simpleObjectWrapper).hasValue(source.simpleObjectWrapper.get());
+				});
+	}
+
+	@Test // GH-2396
+	void verifySerializeUUIDIntoBytes() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		UUID source = UUID.fromString("730145fe-324d-4fb1-b12f-60b89a045730");
+		assertThat(serializer.serialize(source)).isEqualTo(("\"" + source + "\"").getBytes(StandardCharsets.UTF_8));
+	}
+
+	@Test // GH-2396
+	void deserializesUUIDFromBytes() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+		UUID deserializedUuid = serializer
+				.deserialize("\"730145fe-324d-4fb1-b12f-60b89a045730\"".getBytes(StandardCharsets.UTF_8), UUID.class);
+
+		assertThat(deserializedUuid).isEqualTo(UUID.fromString("730145fe-324d-4fb1-b12f-60b89a045730"));
+	}
+
+	@Test // GH-2396
+	void serializesEnumIntoBytes() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		assertThat(serializer.serialize(EnumType.ONE)).isEqualTo(("\"ONE\"").getBytes(StandardCharsets.UTF_8));
+	}
+
+	@Test // GH-2396
+	void deserializesEnumFromBytes() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		assertThat(serializer.deserialize("\"TWO\"".getBytes(StandardCharsets.UTF_8), EnumType.class))
+				.isEqualTo(EnumType.TWO);
+	}
+
+	@Test // GH-2396
+	void serializesJavaTimeIntoBytes() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		WithJsr310 source = new WithJsr310();
+		source.myDate = java.time.LocalDate.of(2022, 9, 2);
+
+		assertThat(serializer.serialize(source)).isEqualTo(
+				("{\"@class\":\"org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializerUnitTests$WithJsr310\",\"myDate\":[2022,9,2]}")
+						.getBytes(StandardCharsets.UTF_8));
+	}
+
+	@Test // GH-2396
+	void deserializesJavaTimeFrimBytes() {
+
+		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
+
+		byte[] source = "{\"@class\":\"org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializerUnitTests$WithJsr310\",\"myDate\":[2022,9,2]}"
+				.getBytes(StandardCharsets.UTF_8);
+		assertThat(serializer.deserialize(source, WithJsr310.class).myDate).isEqualTo(java.time.LocalDate.of(2022, 9, 2));
 	}
 
 	private static void serializeAndDeserializeNullValue(GenericJackson2JsonRedisSerializer serializer) {
@@ -184,7 +364,7 @@ class GenericJackson2JsonRedisSerializerUnitTests {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(@Nullable Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -198,7 +378,13 @@ class GenericJackson2JsonRedisSerializerUnitTests {
 			return nullSafeEquals(this.stringValue, other.stringValue)
 					&& nullSafeEquals(this.simpleObject, other.simpleObject);
 		}
+	}
 
+	@Data
+	static final class FinalObject {
+		public Long longValue;
+		public int[] myArray;
+		SimpleObject simpleObject;
 	}
 
 	static class SimpleObject {
@@ -217,7 +403,7 @@ class GenericJackson2JsonRedisSerializerUnitTests {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(@Nullable Object obj) {
 
 			if (this == obj) {
 				return true;
@@ -233,4 +419,28 @@ class GenericJackson2JsonRedisSerializerUnitTests {
 		}
 	}
 
+	@Data
+	static class CountAndArray {
+
+		private int count;
+		private int[] available;
+		private Long[] arrayOfPrimitiveWrapper;
+	}
+
+	@Data
+	static class WithWrapperTypes {
+
+		AtomicReference<Long> primitiveWrapper;
+		AtomicReference<Integer[]> primitiveArrayWrapper;
+		AtomicReference<SimpleObject> simpleObjectWrapper;
+	}
+
+	enum EnumType {
+		ONE, TWO
+	}
+
+	static class WithJsr310 {
+		@JsonSerialize(using = LocalDateSerializer.class)
+		@JsonDeserialize(using = LocalDateDeserializer.class) private LocalDate myDate;
+	}
 }

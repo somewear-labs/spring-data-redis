@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
 /**
  * @author Christoph Strobl
  * @author Mark Paluch
+ * @author Dennis Neufeld
  * @since 2.0
  */
 public interface DefaultedRedisClusterConnection extends RedisClusterConnection, DefaultedRedisConnection {
@@ -76,8 +77,22 @@ public interface DefaultedRedisClusterConnection extends RedisClusterConnection,
 	/** @deprecated in favor of {@link RedisConnection#serverCommands()}. */
 	@Override
 	@Deprecated
+	default void flushDb(RedisClusterNode node, FlushOption option) {
+		serverCommands().flushDb(node, option);
+	}
+
+	/** @deprecated in favor of {@link RedisConnection#serverCommands()}. */
+	@Override
+	@Deprecated
 	default void flushAll(RedisClusterNode node) {
 		serverCommands().flushAll(node);
+	}
+
+	/** @deprecated in favor of {@link RedisConnection#serverCommands()}. */
+	@Override
+	@Deprecated
+	default void flushAll(RedisClusterNode node, FlushOption option) {
+		serverCommands().flushAll(node, option);
 	}
 
 	/** @deprecated in favor of {@link RedisConnection#serverCommands()}. */

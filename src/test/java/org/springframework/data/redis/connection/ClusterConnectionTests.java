@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.springframework.data.geo.Point;
 /**
  * @author Christoph Strobl
  * @author Mark Paluch
+ * @author Dennis Neufeld
  */
 public interface ClusterConnectionTests {
 
@@ -123,8 +124,38 @@ public interface ClusterConnectionTests {
 	// DATAREDIS-315
 	void flushDbOnSingleNodeShouldFlushOnlyGivenNodesDb();
 
+	// GH-2187
+	void flushDbSyncOnSingleNodeShouldFlushOnlyGivenNodesDb();
+
+	// GH-2187
+	void flushDbAsyncOnSingleNodeShouldFlushOnlyGivenNodesDb();
+
 	// DATAREDIS-315
 	void flushDbShouldFlushAllClusterNodes();
+
+	// GH-2187
+	void flushDbSyncShouldFlushAllClusterNodes();
+
+	// GH-2187
+	void flushDbAsyncShouldFlushAllClusterNodes();
+
+	// GH-2187
+	void flushAllOnSingleNodeShouldFlushOnlyGivenNodesDb();
+
+	// GH-2187
+	void flushAllSyncOnSingleNodeShouldFlushOnlyGivenNodesDb();
+
+	// GH-2187
+	void flushAllAsyncOnSingleNodeShouldFlushOnlyGivenNodesDb();
+
+	// GH-2187
+	void flushAllShouldFlushAllClusterNodes();
+
+	// GH-2187
+	void flushAllSyncShouldFlushAllClusterNodes();
+
+	// GH-2187
+	void flushAllAsyncShouldFlushAllClusterNodes();
 
 	// DATAREDIS-438
 	void geoAddMultipleGeoLocations();
@@ -568,8 +599,8 @@ public interface ClusterConnectionTests {
 	// DATAREDIS-315
 	void sortAndStoreShouldAddSortedValuesValuesCorrectly();
 
-	// DATAREDIS-315
-	void sortAndStoreShouldReturnZeroWhenListDoesNotExist();
+	// DATAREDIS-315, GH-2341
+	void sortAndStoreShouldReplaceDestinationList();
 
 	// DATAREDIS-315
 	void sortShouldReturnValuesCorrectly();

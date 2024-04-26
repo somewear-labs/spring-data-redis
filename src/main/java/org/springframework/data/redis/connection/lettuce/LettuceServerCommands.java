@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.springframework.util.Assert;
 
 /**
  * @author Mark Paluch
+ * @author Dennis Neufeld
  * @since 2.0
  */
 class LettuceServerCommands implements RedisServerCommands {
@@ -100,11 +101,29 @@ class LettuceServerCommands implements RedisServerCommands {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.RedisServerCommands#flushDb(org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushDb(FlushOption option) {
+		connection.invokeStatus().just(RedisServerAsyncCommands::flushdb, LettuceConverters.toFlushMode(option));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.connection.RedisServerCommands#flushAll()
 	 */
 	@Override
 	public void flushAll() {
 		connection.invokeStatus().just(RedisServerAsyncCommands::flushall);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.RedisServerCommands#flushAll(org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushAll(FlushOption option) {
+		connection.invokeStatus().just(RedisServerAsyncCommands::flushall, LettuceConverters.toFlushMode(option));
 	}
 
 	/*

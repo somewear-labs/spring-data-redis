@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ public interface BoundHashOperations<H, HK, HV> extends BoundKeyOperations<H> {
 	HV get(Object member);
 
 	/**
-	 * Get values for given {@code keys} from the hash at the bound key.
+	 * Get values for given {@code keys} from the hash at the bound key. Values are in the order of the requested keys
+	 * Absent field values are represented using {@code null} in the resulting {@link List}.
 	 *
 	 * @param keys must not be {@literal null}.
 	 * @return {@literal null} when used in pipeline / transaction.
@@ -89,7 +90,7 @@ public interface BoundHashOperations<H, HK, HV> extends BoundKeyOperations<H> {
 	Double increment(HK key, double delta);
 
 	/**
-	 * Return a random key (aka field) from the hash value stored at the bound key.
+	 * Return a random key (aka field) from the hash stored at the bound key.
 	 *
 	 * @return {@literal null} if the hash does not exist or when used in pipeline / transaction.
 	 * @since 2.6
@@ -99,7 +100,7 @@ public interface BoundHashOperations<H, HK, HV> extends BoundKeyOperations<H> {
 	HK randomKey();
 
 	/**
-	 * Return a random entry from the hash value stored at the bound key.
+	 * Return a random entry from the hash stored at the bound key.
 	 *
 	 * @return {@literal null} if key does not exist or when used in pipeline / transaction.
 	 * @since 2.6
@@ -109,10 +110,10 @@ public interface BoundHashOperations<H, HK, HV> extends BoundKeyOperations<H> {
 	Map.Entry<HK, HV> randomEntry();
 
 	/**
-	 * Return a random keys (aka fields) from the hash value stored at the bound key. If the provided {@code count} argument is
+	 * Return a random keys (aka fields) from the hash stored at the bound key. If the provided {@code count} argument is
 	 * positive, return a list of distinct keys, capped either at {@code count} or the hash size. If {@code count} is
-	 * negative, the behavior changes and the command is allowed to return the same key multiple times. In this case,
-	 * the number of returned keys is the absolute value of the specified count.
+	 * negative, the behavior changes and the command is allowed to return the same key multiple times. In this case, the
+	 * number of returned keys is the absolute value of the specified count.
 	 *
 	 * @param count number of keys to return.
 	 * @return {@literal null} if key does not exist or when used in pipeline / transaction.
@@ -123,7 +124,7 @@ public interface BoundHashOperations<H, HK, HV> extends BoundKeyOperations<H> {
 	List<HK> randomKeys(long count);
 
 	/**
-	 * Return a random entry from the hash value stored at the bound key.
+	 * Return a random entry from the hash stored at the bound key.
 	 *
 	 * @param count number of entries to return. Must be positive.
 	 * @return {@literal null} if the hash does not exist or when used in pipeline / transaction.
@@ -202,10 +203,12 @@ public interface BoundHashOperations<H, HK, HV> extends BoundKeyOperations<H> {
 	Map<HK, HV> entries();
 
 	/**
-	 * Use a {@link Cursor} to iterate over entries in the hash.
+	 * Use a {@link Cursor} to iterate over entries in hash at the bound key. <br />
+	 * <strong>Important:</strong> Call {@link Cursor#close()} when done to avoid resource leaks.
 	 *
-	 * @param options
-	 * @return
+	 * @param options must not be {@literal null}.
+	 * @return the result cursor providing access to the scan result. Must be closed once fully processed (e.g. through a
+	 *         try-with-resources clause).
 	 * @since 1.4
 	 */
 	Cursor<Map.Entry<HK, HV>> scan(ScanOptions options);

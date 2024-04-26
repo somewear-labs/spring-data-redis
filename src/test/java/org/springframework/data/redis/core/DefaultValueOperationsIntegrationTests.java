@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2021 the original author or authors.
+ * Copyright 2013-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.springframework.data.redis.core;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.*;
-import static org.springframework.data.redis.SpinBarrier.*;
+import static org.awaitility.Awaitility.*;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
@@ -45,6 +45,7 @@ import org.springframework.data.redis.test.extension.parametrized.ParameterizedR
  * @author Thomas Darimont
  * @author Jiahe Cai
  * @author Mark Paluch
+ * @author Hendrik Duerkop
  */
 @MethodSource("testParams")
 public class DefaultValueOperationsIntegrationTests<K, V> {
@@ -316,7 +317,7 @@ public class DefaultValueOperationsIntegrationTests<K, V> {
 
 		valueOps.set(key, value, 1, TimeUnit.MILLISECONDS);
 
-		waitFor(() -> (!redisTemplate.hasKey(key)), 500);
+		await().atMost(Duration.ofMillis(500L)).until(() -> !redisTemplate.hasKey(key));
 	}
 
 	@ParameterizedRedisTest

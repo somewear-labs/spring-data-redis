@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ public class RedisClusterConfiguration implements RedisConfiguration, ClusterCon
 	private void appendClusterNodes(Set<String> hostAndPorts) {
 
 		for (String hostAndPort : hostAndPorts) {
-			addClusterNode(readHostAndPortFromString(hostAndPort));
+			addClusterNode(RedisNode.fromString(hostAndPort));
 		}
 	}
 
@@ -227,7 +227,7 @@ public class RedisClusterConfiguration implements RedisConfiguration, ClusterCon
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 		if (this == o) {
 			return true;
 		}
@@ -260,15 +260,6 @@ public class RedisClusterConfiguration implements RedisConfiguration, ClusterCon
 		return result;
 	}
 
-	private RedisNode readHostAndPortFromString(String hostAndPort) {
-
-		String[] args = split(hostAndPort, ":");
-
-		Assert.notNull(args, "HostAndPort need to be seperated by  ':'.");
-		Assert.isTrue(args.length == 2, "Host and Port String needs to specified as host:port");
-		return new RedisNode(args[0], Integer.valueOf(args[1]));
-	}
-
 	/**
 	 * @param clusterHostAndPorts must not be {@literal null} or empty.
 	 * @param redirects the max number of redirects to follow.
@@ -288,4 +279,5 @@ public class RedisClusterConfiguration implements RedisConfiguration, ClusterCon
 
 		return map;
 	}
+
 }

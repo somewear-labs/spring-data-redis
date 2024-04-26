@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2021 the original author or authors.
+ * Copyright 2013-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ import org.springframework.util.StringUtils;
  * @author Ninad Divadkar
  * @author dengliming
  * @author Chris Bono
+ * @author Vikas Garg
  */
 public abstract class LettuceConverters extends Converters {
 
@@ -512,7 +513,13 @@ public abstract class LettuceConverters extends Converters {
 
 			RedisURI.Builder sentinelBuilder = RedisURI.Builder.redis(sentinel.getHost(), sentinel.getPort());
 
-			sentinelPassword.toOptional().ifPresent(sentinelBuilder::withPassword);
+			String sentinelUsername = sentinelConfiguration.getSentinelUsername();
+			if (StringUtils.hasText(sentinelUsername) && sentinelPassword.isPresent()) {
+				// See https://github.com/lettuce-io/lettuce-core/issues/1404
+				sentinelBuilder.withAuthentication(sentinelUsername, sentinelPassword.get());
+			} else {
+				sentinelPassword.toOptional().ifPresent(sentinelBuilder::withPassword);
+			}
 
 			builder.withSentinel(sentinelBuilder.build());
 		}
@@ -520,9 +527,9 @@ public abstract class LettuceConverters extends Converters {
 		String username = sentinelConfiguration.getUsername();
 		RedisPassword password = sentinelConfiguration.getPassword();
 
-		if (StringUtils.hasText(username)) {
+		if (StringUtils.hasText(username) && password.isPresent()) {
 			// See https://github.com/lettuce-io/lettuce-core/issues/1404
-			builder.withAuthentication(username, new String(password.toOptional().orElse(new char[0])));
+			builder.withAuthentication(username, password.get());
 		} else {
 			password.toOptional().ifPresent(builder::withPassword);
 		}
@@ -889,10 +896,9 @@ public abstract class LettuceConverters extends Converters {
 
 		if (args.hasFlags()) {
 			for (GeoCommandArgs.GeoCommandFlag flag : args.getFlags()) {
-				if(flag.equals(GeoRadiusCommandArgs.Flag.WITHCOORD)) {
+				if (flag.equals(GeoRadiusCommandArgs.Flag.WITHCOORD)) {
 					geoArgs.withCoordinates();
-				}
-				else if(flag.equals(GeoRadiusCommandArgs.Flag.WITHDIST)) {
+				} else if (flag.equals(GeoRadiusCommandArgs.Flag.WITHDIST)) {
 					geoArgs.withDistance();
 				}
 			}
@@ -1162,6 +1168,22 @@ public abstract class LettuceConverters extends Converters {
 		}
 
 		throw new IllegalArgumentException(String.format("Cannot convert %s to Lettuce GeoRef", reference));
+	}
+
+	static FlushMode toFlushMode(@Nullable RedisServerCommands.FlushOption option) {
+
+		if (option == null) {
+			return FlushMode.SYNC;
+		}
+
+		switch (option) {
+			case ASYNC:
+				return FlushMode.ASYNC;
+			case SYNC:
+				return FlushMode.SYNC;
+			default:
+				throw new IllegalArgumentException("Flush option " + option + " is not supported.");
+		}
 	}
 
 	/**

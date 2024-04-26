@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.springframework.util.Assert;
  *
  * @author Christoph Strobl
  * @author Luis De Bello
+ * @author Vikas Garg
  * @since 2.1
  */
 public interface RedisConfiguration {
@@ -400,6 +401,23 @@ public interface RedisConfiguration {
 		}
 
 		/**
+		 * Create and set a username with the given {@link String}. Requires Redis 6 or newer.
+		 *
+		 * @param sentinelUsername the username for sentinel.
+		 * @since 2.7
+		 */
+		void setSentinelUsername(@Nullable String sentinelUsername);
+
+		/**
+		 * Get the username to use when connecting.
+		 *
+		 * @return {@literal null} if none set.
+		 * @since 2.7
+		 */
+		@Nullable
+		String getSentinelUsername();
+
+		/**
 		 * Create and set a {@link RedisPassword} to be used when authenticating with Redis Sentinel from the given
 		 * {@link String}.
 		 *
@@ -438,6 +456,7 @@ public interface RedisConfiguration {
 		 * @since 2.2.2
 		 */
 		RedisPassword getSentinelPassword();
+
 	}
 
 	/**

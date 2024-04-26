@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,8 +71,8 @@ public interface ZSetOperations<K, V> {
 	 * Add {@code value} to a sorted set at {@code key}, or update its {@code score} if it already exists.
 	 *
 	 * @param key must not be {@literal null}.
-	 * @param score the score.
 	 * @param value the value.
+	 * @param score the score.
 	 * @return {@literal null} when used in pipeline / transaction.
 	 * @see <a href="https://redis.io/commands/zadd">Redis Documentation: ZADD</a>
 	 */
@@ -83,8 +83,8 @@ public interface ZSetOperations<K, V> {
 	 * Add {@code value} to a sorted set at {@code key} if it does not already exists.
 	 *
 	 * @param key must not be {@literal null}.
-	 * @param score the score.
 	 * @param value the value.
+	 * @param score the score.
 	 * @return {@literal null} when used in pipeline / transaction.
 	 * @since 2.5
 	 * @see <a href="https://redis.io/commands/zadd">Redis Documentation: ZADD NX</a>
@@ -130,8 +130,8 @@ public interface ZSetOperations<K, V> {
 	 * Increment the score of element with {@code value} in sorted set by {@code increment}.
 	 *
 	 * @param key must not be {@literal null}.
-	 * @param delta
 	 * @param value the value.
+	 * @param delta the delta to add. Can be negative.
 	 * @return {@literal null} when used in pipeline / transaction.
 	 * @see <a href="https://redis.io/commands/zincrby">Redis Documentation: ZINCRBY</a>
 	 */
@@ -152,7 +152,7 @@ public interface ZSetOperations<K, V> {
 	 * Get {@code count} distinct random elements from set at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
-	 * @param count nr of members to return
+	 * @param count number of members to return.
 	 * @return empty {@link Set} if {@code key} does not exist.
 	 * @throws IllegalArgumentException if count is negative.
 	 * @since 2.6
@@ -165,7 +165,7 @@ public interface ZSetOperations<K, V> {
 	 * Get {@code count} random elements from set at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
-	 * @param count nr of members to return.
+	 * @param count number of members to return.
 	 * @return empty {@link List} if {@code key} does not exist or {@literal null} when used in pipeline / transaction.
 	 * @throws IllegalArgumentException if count is negative.
 	 * @since 2.6
@@ -188,7 +188,7 @@ public interface ZSetOperations<K, V> {
 	 * Get {@code count} distinct random elements with their score from set at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
-	 * @param count nr of members to return
+	 * @param count number of members to return.
 	 * @return empty {@link Set} if {@code key} does not exist.
 	 * @throws IllegalArgumentException if count is negative.
 	 * @since 2.6
@@ -201,7 +201,7 @@ public interface ZSetOperations<K, V> {
 	 * Get {@code count} random elements with their score from set at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
-	 * @param count nr of members to return.
+	 * @param count number of members to return.
 	 * @return empty {@link List} if {@code key} does not exist or {@literal null} when used in pipeline / transaction.
 	 * @throws IllegalArgumentException if count is negative.
 	 * @since 2.6
@@ -525,7 +525,7 @@ public interface ZSetOperations<K, V> {
 		Assert.notNull(timeout, "Timeout must not be null");
 		Assert.isTrue(!timeout.isNegative(), "Timeout must not be negative");
 
-		return popMin(key, TimeoutUtils.toSeconds(timeout), TimeUnit.SECONDS);
+		return popMax(key, TimeoutUtils.toSeconds(timeout), TimeUnit.SECONDS);
 	}
 
 	/**
@@ -947,12 +947,13 @@ public interface ZSetOperations<K, V> {
 	Long unionAndStore(K key, Collection<K> otherKeys, K destKey, Aggregate aggregate, Weights weights);
 
 	/**
-	 * Iterate over elements in zset at {@code key}. <br />
-	 * <strong>Important:</strong> Call {@link Cursor#close()} when done to avoid resource leak.
+	 * Use a {@link Cursor} to iterate over entries zset at {@code key}. <br />
+	 * <strong>Important:</strong> Call {@link Cursor#close()} when done to avoid resource leaks.
 	 *
 	 * @param key
-	 * @param options
-	 * @return {@literal null} when used in pipeline / transaction.
+	 * @param options must not be {@literal null}.
+	 * @return the result cursor providing access to the scan result. Must be closed once fully processed (e.g. through a
+	 *         try-with-resources clause).
 	 * @see <a href="https://redis.io/commands/zscan">Redis Documentation: ZSCAN</a>
 	 * @since 1.4
 	 */

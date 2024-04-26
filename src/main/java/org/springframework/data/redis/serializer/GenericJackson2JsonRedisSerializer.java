@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,24 @@ package org.springframework.data.redis.serializer;
 import java.io.IOException;
 
 import org.springframework.cache.support.NullValue;
+import org.springframework.core.KotlinDetector;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
+import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.SerializerFactory;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -58,6 +65,8 @@ public class GenericJackson2JsonRedisSerializer implements RedisSerializer<Objec
 	 * {@link JsonTypeInfo.Id#CLASS} will be used.
 	 *
 	 * @param classPropertyTypeName Name of the JSON property holding type information. Can be {@literal null}.
+	 * @see ObjectMapper#activateDefaultTypingAsProperty(PolymorphicTypeValidator, DefaultTyping, String)
+	 * @see ObjectMapper#activateDefaultTyping(PolymorphicTypeValidator, DefaultTyping, As)
 	 */
 	public GenericJackson2JsonRedisSerializer(@Nullable String classPropertyTypeName) {
 
@@ -67,11 +76,15 @@ public class GenericJackson2JsonRedisSerializer implements RedisSerializer<Objec
 		// the type hint embedded for deserialization using the default typing feature.
 		registerNullValueSerializer(mapper, classPropertyTypeName);
 
+		StdTypeResolverBuilder typer = new TypeResolverBuilder(DefaultTyping.EVERYTHING,
+				mapper.getPolymorphicTypeValidator());
+		typer = typer.init(JsonTypeInfo.Id.CLASS, null);
+		typer = typer.inclusion(JsonTypeInfo.As.PROPERTY);
+
 		if (StringUtils.hasText(classPropertyTypeName)) {
-			mapper.enableDefaultTypingAsProperty(DefaultTyping.NON_FINAL, classPropertyTypeName);
-		} else {
-			mapper.enableDefaultTyping(DefaultTyping.NON_FINAL, As.PROPERTY);
+			typer = typer.typeProperty(classPropertyTypeName);
 		}
+		mapper.setDefaultTyping(typer);
 	}
 
 	/**
@@ -179,12 +192,82 @@ public class GenericJackson2JsonRedisSerializer implements RedisSerializer<Objec
 		 * @see com.fasterxml.jackson.databind.ser.std.StdSerializer#serialize(java.lang.Object, com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider)
 		 */
 		@Override
-		public void serialize(NullValue value, JsonGenerator jgen, SerializerProvider provider)
-				throws IOException {
+		public void serialize(NullValue value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
 
 			jgen.writeStartObject();
 			jgen.writeStringField(classIdentifier, NullValue.class.getName());
 			jgen.writeEndObject();
+		}
+
+		@Override
+		public void serializeWithType(NullValue value, JsonGenerator gen, SerializerProvider serializers,
+				TypeSerializer typeSer) throws IOException {
+			serialize(value, gen, serializers);
+		}
+	}
+
+	/**
+	 * Custom {@link StdTypeResolverBuilder} that considers typing for non-primitive types. Primitives, their wrappers and
+	 * primitive arrays do not require type hints. The default {@code DefaultTyping#EVERYTHING} typing does not satisfy
+	 * those requirements.
+	 *
+	 * @author Mark Paluch
+	 * @since 2.7.2
+	 */
+	private static class TypeResolverBuilder extends ObjectMapper.DefaultTypeResolverBuilder {
+
+		public TypeResolverBuilder(DefaultTyping t, PolymorphicTypeValidator ptv) {
+			super(t, ptv);
+		}
+
+		@Override
+		public ObjectMapper.DefaultTypeResolverBuilder withDefaultImpl(Class<?> defaultImpl) {
+			return this;
+		}
+
+		/**
+		 * Method called to check if the default type handler should be used for given type. Note: "natural types" (String,
+		 * Boolean, Integer, Double) will never use typing; that is both due to them being concrete and final, and since
+		 * actual serializers and deserializers will also ignore any attempts to enforce typing.
+		 */
+		public boolean useForType(JavaType t) {
+
+			if (t.isJavaLangObject()) {
+				return true;
+			}
+
+			t = resolveArrayOrWrapper(t);
+
+			if (t.isEnumType() || ClassUtils.isPrimitiveOrWrapper(t.getRawClass())) {
+				return false;
+			}
+
+			if (t.isFinal() && !KotlinDetector.isKotlinType(t.getRawClass())
+					&& t.getRawClass().getPackage().getName().startsWith("java")) {
+				return false;
+			}
+
+			// [databind#88] Should not apply to JSON tree models:
+			return !TreeNode.class.isAssignableFrom(t.getRawClass());
+		}
+
+		private JavaType resolveArrayOrWrapper(JavaType type) {
+
+			while (type.isArrayType()) {
+				type = type.getContentType();
+				if (type.isReferenceType()) {
+					type = resolveArrayOrWrapper(type);
+				}
+			}
+
+			while (type.isReferenceType()) {
+				type = type.getReferencedType();
+				if (type.isArrayType()) {
+					type = resolveArrayOrWrapper(type);
+				}
+			}
+
+			return type;
 		}
 	}
 }

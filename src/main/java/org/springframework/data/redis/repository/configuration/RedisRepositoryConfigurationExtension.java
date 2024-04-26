@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class RedisRepositoryConfigurationExtension extends KeyValueRepositoryCon
 
 	private static AbstractBeanDefinition createRedisKeyValueAdapter(RepositoryConfigurationSource configuration) {
 
-		return BeanDefinitionBuilder.rootBeanDefinition(RedisKeyValueAdapter.class) //
+		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(RedisKeyValueAdapter.class) //
 				.addConstructorArgReference(configuration.getRequiredAttribute("redisTemplateRef", String.class)) //
 				.addConstructorArgReference(REDIS_CONVERTER_BEAN_NAME) //
 				.addPropertyValue("enableKeyspaceEvents",
@@ -147,8 +147,12 @@ public class RedisRepositoryConfigurationExtension extends KeyValueRepositoryCon
 				.addPropertyValue("keyspaceNotificationsConfigParameter",
 						configuration.getAttribute("keyspaceNotificationsConfigParameter", String.class).orElse("")) //
 				.addPropertyValue("shadowCopy",
-						configuration.getRequiredAttribute("shadowCopy", ShadowCopy.class)) //
-				.getBeanDefinition();
+						configuration.getRequiredAttribute("shadowCopy", ShadowCopy.class));
+
+		configuration.getAttribute("messageListenerContainerRef")
+				.ifPresent(it -> builder.addPropertyReference("messageListenerContainer", it));
+
+		return builder.getBeanDefinition();
 	}
 
 	private static AbstractBeanDefinition createRedisReferenceResolverDefinition(String redisTemplateRef) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import static org.assertj.core.api.Assumptions.*;
 
 import reactor.test.StepVerifier;
 
+import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 import org.springframework.data.redis.test.extension.parametrized.ParameterizedRedisTest;
 
 /**
  * @author Mark Paluch
  * @author Christoph Strobl
+ * @author Dennis Neufeld
  */
 public class LettuceReactiveServerCommandsIntegrationTests extends LettuceReactiveCommandsTestSupport {
 
@@ -70,6 +72,40 @@ public class LettuceReactiveServerCommandsIntegrationTests extends LettuceReacti
 		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(0L).verifyComplete();
 	}
 
+	@ParameterizedRedisTest // GH-2187
+	void flushDbSyncShouldRespondCorrectly() {
+
+		connection.serverCommands().flushDb() //
+				.then(connection.stringCommands().set(KEY_1_BBUFFER, VALUE_1_BBUFFER)).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(1L).verifyComplete();
+
+		connection.serverCommands().flushDb(FlushOption.SYNC).as(StepVerifier::create) //
+				.expectNext("OK") //
+				.verifyComplete();
+
+		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(0L).verifyComplete();
+	}
+
+	@ParameterizedRedisTest // GH-2187
+	void flushDbAsyncShouldRespondCorrectly() {
+
+		connection.serverCommands().flushDb() //
+				.then(connection.stringCommands().set(KEY_1_BBUFFER, VALUE_1_BBUFFER)).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(1L).verifyComplete();
+
+		connection.serverCommands().flushDb(FlushOption.ASYNC).as(StepVerifier::create) //
+				.expectNext("OK") //
+				.verifyComplete();
+
+		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(0L).verifyComplete();
+	}
+
 	@ParameterizedRedisTest // DATAREDIS-659
 	void flushAllShouldRespondCorrectly() {
 
@@ -81,6 +117,36 @@ public class LettuceReactiveServerCommandsIntegrationTests extends LettuceReacti
 		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(1L).verifyComplete();
 
 		connection.serverCommands().flushAll().as(StepVerifier::create).expectNext("OK").verifyComplete();
+
+		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(0L).verifyComplete();
+	}
+
+	@ParameterizedRedisTest // GH-2187
+	void flushAllSyncShouldRespondCorrectly() {
+
+		connection.serverCommands().flushAll() //
+				.then(connection.stringCommands().set(KEY_1_BBUFFER, VALUE_1_BBUFFER)).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(1L).verifyComplete();
+
+		connection.serverCommands().flushAll(FlushOption.SYNC).as(StepVerifier::create).expectNext("OK").verifyComplete();
+
+		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(0L).verifyComplete();
+	}
+
+	@ParameterizedRedisTest // GH-2187
+	void flushAllAsyncShouldRespondCorrectly() {
+
+		connection.serverCommands().flushAll() //
+				.then(connection.stringCommands().set(KEY_1_BBUFFER, VALUE_1_BBUFFER)).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(1L).verifyComplete();
+
+		connection.serverCommands().flushAll(FlushOption.ASYNC).as(StepVerifier::create).expectNext("OK").verifyComplete();
 
 		connection.serverCommands().dbSize().as(StepVerifier::create).expectNext(0L).verifyComplete();
 	}

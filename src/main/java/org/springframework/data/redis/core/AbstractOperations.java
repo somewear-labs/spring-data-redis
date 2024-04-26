@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -387,7 +387,12 @@ abstract class AbstractOperations<K, V> {
 	 * @return converted or {@literal null}.
 	 * @since 1.8
 	 */
-	GeoResults<GeoLocation<V>> deserializeGeoResults(GeoResults<GeoLocation<byte[]>> source) {
+	@Nullable
+	GeoResults<GeoLocation<V>> deserializeGeoResults(@Nullable GeoResults<GeoLocation<byte[]>> source) {
+
+		if (source == null) {
+			return null;
+		}
 
 		if (valueSerializer() == null) {
 			return (GeoResults<GeoLocation<V>>) (Object) source;

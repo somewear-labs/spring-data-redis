@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,11 @@ class LettuceReactiveStreamCommands implements ReactiveStreamCommands {
 			if (command.hasMaxlen()) {
 				args.maxlen(command.getMaxlen());
 			}
+			if (command.hasMinId()) {
+				args.minId(command.getMinId().getValue());
+			}
 			args.nomkstream(command.isNoMkStream());
+			args.approximateTrimming(command.isApproximateTrimming());
 
 			return cmd.xadd(command.getKey(), args, command.getBody())
 					.map(value -> new CommandResponse<>(command, RecordId.of(value)));
@@ -153,7 +157,6 @@ class LettuceReactiveStreamCommands implements ReactiveStreamCommands {
 			Flux<ByteBufferRecord> result = cmd.xclaim(command.getKey(), from, args, ids)
 					.map(it -> StreamRecords.newRecord().in(it.getStream()).withId(it.getId()).ofBuffer(it.getBody()));
 			return new CommandResponse<>(command, result);
-
 		}));
 	}
 

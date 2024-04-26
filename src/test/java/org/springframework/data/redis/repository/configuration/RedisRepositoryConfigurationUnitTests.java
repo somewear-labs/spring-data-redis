@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 the original author or authors.
+ * Copyright 2016-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -32,6 +33,7 @@ import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.RedisKeyValueAdapter;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.convert.ReferenceResolver;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.repository.Repository;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -39,7 +41,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
+ * Unit tests for Redis Repository configuration.
+ *
  * @author Christoph Strobl
+ * @author Mark Paluch
  */
 public class RedisRepositoryConfigurationUnitTests {
 
@@ -120,6 +125,39 @@ public class RedisRepositoryConfigurationUnitTests {
 			assertThat(ctx.getBean("redisKeyValueAdapter")).isNotNull();
 			assertThat(ctx.getBean("redisCustomConversions")).isNotNull();
 			assertThat(ctx.getBean("redisReferenceResolver")).isNotNull();
+		}
+	}
+
+	@ExtendWith(SpringExtension.class)
+	@DirtiesContext
+	@ContextConfiguration(classes = { WithMessageListenerConfigurationUnitTests.Config.class })
+	public static class WithMessageListenerConfigurationUnitTests {
+
+		@EnableRedisRepositories(considerNestedRepositories = true,
+				includeFilters = { @ComponentScan.Filter(type = FilterType.REGEX, pattern = { ".*ContextSampleRepository" }) },
+				keyspaceNotificationsConfigParameter = "", messageListenerContainerRef = "myContainer")
+		static class Config {
+
+			@Bean
+			RedisMessageListenerContainer myContainer() {
+				return mock(RedisMessageListenerContainer.class);
+			}
+
+			@Bean
+			RedisTemplate<?, ?> redisTemplate() {
+				return createTemplateMock();
+			}
+		}
+
+		@Autowired ApplicationContext ctx;
+
+		@Test // DATAREDIS-425
+		public void shouldConfigureMessageListenerContainer() {
+
+			RedisKeyValueAdapter adapter = ctx.getBean("redisKeyValueAdapter", RedisKeyValueAdapter.class);
+			Object messageListenerContainer = ReflectionTestUtils.getField(adapter, "messageListenerContainer");
+
+			assertThat(Mockito.mockingDetails(messageListenerContainer).isMock()).isTrue();
 		}
 	}
 

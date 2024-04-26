@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.data.redis.core.types.RedisClientInfo;
 
 /**
  * @author Mark Paluch
+ * @author Dennis Neufeld
  * @since 2.0
  */
 public interface RedisClusterServerCommands extends RedisServerCommands {
@@ -67,9 +68,25 @@ public interface RedisClusterServerCommands extends RedisServerCommands {
 
 	/**
 	 * @param node must not be {@literal null}.
+	 * @param option
+	 * @see RedisServerCommands#flushDb(FlushOption)
+	 * @since 2.7
+	 */
+	void flushDb(RedisClusterNode node, FlushOption option);
+
+	/**
+	 * @param node must not be {@literal null}.
 	 * @see RedisServerCommands#flushAll()
 	 */
 	void flushAll(RedisClusterNode node);
+
+	/**
+	 * @param node must not be {@literal null}.
+	 * @param option
+	 * @see RedisServerCommands#flushAll(FlushOption)
+	 * @since 2.7
+	 */
+	void flushAll(RedisClusterNode node, FlushOption option);
 
 	/**
 	 * @param node must not be {@literal null}.

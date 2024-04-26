@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -127,10 +126,10 @@ class IndexWriterUnitTests {
 
 		writer.removeAllIndexes(KEYSPACE);
 
-		ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+		ArgumentCaptor<byte[][]> captor = ArgumentCaptor.forClass(byte[][].class);
 
 		verify(connectionMock, times(1)).del(captor.capture());
-		assertThat(captor.getAllValues()).contains(indexKey1, indexKey2);
+		assertThat(captor.getAllValues()).contains(new byte[][] { indexKey1, indexKey2 });
 	}
 
 	@Test // DATAREDIS-425

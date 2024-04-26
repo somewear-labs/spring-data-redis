@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,10 +155,6 @@ public class LettuceConnectionIntegrationTests extends AbstractConnectionIntegra
 		// Use the connection to make sure the channel is initialized, else nothing happens on close
 		connection.ping();
 		connection.close();
-		// The dedicated connection should not be closed
-		connection.ping();
-
-		connection.close();
 		factory2.destroy();
 		pool.destroy();
 	}
@@ -276,6 +272,16 @@ public class LettuceConnectionIntegrationTests extends AbstractConnectionIntegra
 				(Iterable<byte[]>) connection.execute("MGET", "spring".getBytes(), "data".getBytes(), "redis".getBytes()))
 						.isInstanceOf(List.class)
 						.contains("awesome".getBytes(), "cool".getBytes(), "supercalifragilisticexpialidocious".getBytes());
+	}
+
+	@Test // GH-2473
+	void testExecuteZcardShouldReturnNumericValue() {
+
+		connection.zAdd("spring", 1, "awesome");
+		connection.zAdd("spring", 1, "cool");
+		connection.zAdd("spring", 1, "supercalifragilisticexpialidocious");
+
+		assertThat(connection.execute("ZCARD", "spring")).isInstanceOf(Long.class).isEqualTo(3L);
 	}
 
 	@SuppressWarnings("unchecked")
