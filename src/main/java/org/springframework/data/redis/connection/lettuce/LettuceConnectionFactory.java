@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,6 +364,15 @@ public class LettuceConnectionFactory
 
 		resetConnection();
 
+		if (clusterCommandExecutor != null) {
+
+			try {
+				clusterCommandExecutor.destroy();
+			} catch (Exception ex) {
+				log.warn("Cannot properly close cluster command executor", ex);
+			}
+		}
+
 		dispose(connectionProvider);
 		dispose(reactiveConnectionProvider);
 
@@ -376,15 +385,6 @@ public class LettuceConnectionFactory
 			if (log.isWarnEnabled()) {
 				log.warn((client != null ? ClassUtils.getShortName(client.getClass()) : "LettuceClient")
 						+ " did not shut down gracefully.", e);
-			}
-		}
-
-		if (clusterCommandExecutor != null) {
-
-			try {
-				clusterCommandExecutor.destroy();
-			} catch (Exception ex) {
-				log.warn("Cannot properly close cluster command executor", ex);
 			}
 		}
 

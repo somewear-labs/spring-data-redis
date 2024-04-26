@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.springframework.data.redis.connection.RedisInvalidSubscriptionExcepti
  * Unit test of {@link JedisSubscription}
  *
  * @author Jennifer Hickey
+ * @author Mark Paluch
  */
 @ExtendWith(MockitoExtension.class)
 class JedisSubscriptionUnitTests {
@@ -303,6 +304,17 @@ class JedisSubscriptionUnitTests {
 		subscription.doClose();
 		verify(jedisPubSub, never()).unsubscribe();
 		verify(jedisPubSub, times(1)).punsubscribe();
+	}
+
+	@Test // GH-2355
+	void closeTwiceShouldUnsubscribeOnce() {
+
+		subscription.subscribe(new byte[][] { "a".getBytes() });
+
+		subscription.close();
+		subscription.close();
+
+		verify(jedisPubSub, times(1)).unsubscribe();
 	}
 
 }

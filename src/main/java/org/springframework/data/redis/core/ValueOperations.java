@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,7 +263,8 @@ public interface ValueOperations<K, V> {
 	V getAndSet(K key, V value);
 
 	/**
-	 * Get multiple {@code keys}. Values are returned in the order of the requested keys.
+	 * Get multiple {@code keys}. Values are in the order of the requested keys Absent field values are represented using
+	 * {@code null} in the resulting {@link List}.
 	 *
 	 * @param keys must not be {@literal null}.
 	 * @return {@literal null} when used in pipeline / transaction.

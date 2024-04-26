@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 the original author or authors.
+ * Copyright 2016-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.springframework.data.redis.connection.RedisStringCommands;
 class LettuceReactiveClusterStringCommandsIntegrationTests extends LettuceReactiveClusterTestSupport {
 
 	@Test // DATAREDIS-525
-	void mSetNXShouldAddMultipleKeyValueParisWhenMappedToSameSlot() {
+	void mSetNXShouldAddMultipleKeyValuePairsWhenMappedToSameSlot() {
 
 		Map<ByteBuffer, ByteBuffer> map = new LinkedHashMap<>();
 		map.put(SAME_SLOT_KEY_1_BBUFFER, VALUE_1_BBUFFER);
@@ -47,7 +47,7 @@ class LettuceReactiveClusterStringCommandsIntegrationTests extends LettuceReacti
 	}
 
 	@Test // DATAREDIS-525
-	void mSetNXShouldNotAddMultipleKeyValueParisWhenAlreadyExitAndMapToSameSlot() {
+	void mSetNXShouldNotAddMultipleKeyValuePairsWhenAlreadyExitAndMapToSameSlot() {
 
 		nativeCommands.set(SAME_SLOT_KEY_2, VALUE_2);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.springframework.util.CollectionUtils;
 
 /**
  * @author Mark Paluch
+ * @author Dennis Neufeld
  * @since 2.0
  */
 class LettuceClusterServerCommands extends LettuceServerCommands implements RedisClusterServerCommands {
@@ -126,11 +127,29 @@ class LettuceClusterServerCommands extends LettuceServerCommands implements Redi
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.lettuce.LettuceServerCommands#flushDb(org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushDb(FlushOption option) {
+		executeCommandOnAllNodes(it -> it.flushdb(LettuceConverters.toFlushMode(option)));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.connection.RedisClusterServerCommands#flushDb(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
 	public void flushDb(RedisClusterNode node) {
 		executeCommandOnSingleNode(RedisServerCommands::flushdb, node);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.RedisClusterServerCommands#flushDb(org.springframework.data.redis.connection.RedisClusterNode, org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushDb(RedisClusterNode node, FlushOption option) {
+		executeCommandOnSingleNode(it -> it.flushdb(LettuceConverters.toFlushMode(option)), node);
 	}
 
 	/*
@@ -144,11 +163,29 @@ class LettuceClusterServerCommands extends LettuceServerCommands implements Redi
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.lettuce.LettuceServerCommands#flushAll(org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushAll(FlushOption option) {
+		executeCommandOnAllNodes(it -> it.flushall(LettuceConverters.toFlushMode(option)));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.connection.RedisClusterServerCommands#flushAll(org.springframework.data.redis.connection.RedisClusterNode)
 	 */
 	@Override
 	public void flushAll(RedisClusterNode node) {
 		executeCommandOnSingleNode(RedisServerCommands::flushall, node);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.connection.RedisClusterServerCommands#flushAll(org.springframework.data.redis.connection.RedisClusterNode, org.springframework.data.redis.connection.RedisServerCommands.FlushOption)
+	 */
+	@Override
+	public void flushAll(RedisClusterNode node, FlushOption option) {
+		executeCommandOnSingleNode(it -> it.flushall(LettuceConverters.toFlushMode(option)), node);
 	}
 
 	/*

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.lang.Nullable;
  * @author Christoph Strobl
  * @author Thomas Darimont
  * @author Mark Paluch
+ * @author Dennis Neufeld
  */
 public interface RedisServerCommands {
 
@@ -41,6 +42,13 @@ public interface RedisServerCommands {
 	 */
 	enum MigrateOption {
 		COPY, REPLACE
+	}
+
+	/**
+	 * @since 2.7
+	 */
+	enum FlushOption {
+		SYNC, ASYNC
 	}
 
 	/**
@@ -102,11 +110,29 @@ public interface RedisServerCommands {
 	void flushDb();
 
 	/**
+	 * Delete all keys of the currently selected database using the specified {@link FlushOption}.
+	 *
+	 * @param option
+	 * @see <a href="https://redis.io/commands/flushdb">Redis Documentation: FLUSHDB</a>
+	 * @since 2.7
+	 */
+	void flushDb(FlushOption option);
+
+	/**
 	 * Delete all <b>all keys</b> from <b>all databases</b>.
 	 *
 	 * @see <a href="https://redis.io/commands/flushall">Redis Documentation: FLUSHALL</a>
 	 */
 	void flushAll();
+
+	/**
+	 * Delete all <b>all keys</b> from <b>all databases</b> using the specified {@link FlushOption}.
+	 *
+	 * @param option
+	 * @see <a href="https://redis.io/commands/flushall">Redis Documentation: FLUSHALL</a>
+	 * @since 2.7
+	 */
+	void flushAll(FlushOption option);
 
 	/**
 	 * Load {@literal default} server information like

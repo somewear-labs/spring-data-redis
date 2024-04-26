@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import org.springframework.data.redis.connection.RedisClusterCommands.AddSlots;
 import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisClusterNode;
 import org.springframework.data.redis.connection.RedisClusterNode.SlotRange;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 import org.springframework.data.redis.connection.RedisServerCommands.MigrateOption;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -44,6 +43,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 /**
  * @author Christoph Strobl
  * @author Mark Paluch
+ * @author Dennis Neufeld
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -140,7 +140,7 @@ class DefaultClusterOperationsUnitTests {
 
 		clusterOps.addSlots(NODE_1, 1, 2, 3);
 
-		verify(connection, times(1)).clusterAddSlots(eq(NODE_1), Mockito.<int[]> any());
+		verify(connection, times(1)).clusterAddSlots(eq(NODE_1), any(int[].class));
 	}
 
 	@Test // DATAREDIS-315
@@ -153,7 +153,7 @@ class DefaultClusterOperationsUnitTests {
 
 		clusterOps.addSlots(NODE_1, new SlotRange(1, 3));
 
-		verify(connection, times(1)).clusterAddSlots(eq(NODE_1), Mockito.<int[]> any());
+		verify(connection, times(1)).clusterAddSlots(eq(NODE_1), any(int[].class));
 	}
 
 	@Test // DATAREDIS-315
@@ -206,6 +206,22 @@ class DefaultClusterOperationsUnitTests {
 		clusterOps.flushDb(NODE_1);
 
 		verify(connection, times(1)).flushDb(eq(NODE_1));
+	}
+
+	@Test // GH-2187
+	void flushDbSyncShouldDelegateToConnection() {
+
+		clusterOps.flushDb(NODE_1, FlushOption.SYNC);
+
+		verify(connection, times(1)).flushDb(eq(NODE_1), eq(FlushOption.SYNC));
+	}
+
+	@Test // GH-2187
+	void flushDbAsyncShouldDelegateToConnection() {
+
+		clusterOps.flushDb(NODE_1, FlushOption.ASYNC);
+
+		verify(connection, times(1)).flushDb(eq(NODE_1), eq(FlushOption.ASYNC));
 	}
 
 	@Test // DATAREDIS-315

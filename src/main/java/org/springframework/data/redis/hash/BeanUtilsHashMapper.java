@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import java.util.Map.Entry;
 
 import org.apache.commons.beanutils.BeanUtils;
 
+import org.springframework.util.Assert;
+
 /**
  * HashMapper based on Apache Commons BeanUtils project. Does NOT supports nested properties.
  *
@@ -28,7 +30,7 @@ import org.apache.commons.beanutils.BeanUtils;
  * @author Christoph Strobl
  * @author Mark Paluch
  */
-public class BeanUtilsHashMapper<T> implements HashMapper<T, String, String> {
+public class BeanUtilsHashMapper<T> implements HashMapper<T, String, String>, HashObjectReader<String, String> {
 
 	private final Class<T> type;
 
@@ -47,8 +49,20 @@ public class BeanUtilsHashMapper<T> implements HashMapper<T, String, String> {
 	 */
 	@Override
 	public T fromHash(Map<String, String> hash) {
+		return fromHash(type, hash);
+	}
 
-		T instance = org.springframework.beans.BeanUtils.instantiateClass(type);
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.redis.hash.HashMapper#fromHash(java.lang.Class, java.util.Map)
+	 */
+	@Override
+	public <R> R fromHash(Class<R> type, Map<String, String> hash) {
+
+		Assert.notNull(type, "Type must not be null");
+		Assert.notNull(hash, "Hash must not be null");
+
+		R instance = org.springframework.beans.BeanUtils.instantiateClass(type);
 
 		try {
 

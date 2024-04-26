@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2021 the original author or authors.
+ * Copyright 2014-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
-import org.springframework.data.redis.RedisSystemException;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -32,6 +34,8 @@ import org.springframework.util.Assert;
  * @since 1.4
  */
 public abstract class AbstractRedisConnection implements DefaultedRedisConnection {
+
+	private final Log LOGGER = LogFactory.getLog(getClass());
 
 	private @Nullable RedisSentinelConfiguration sentinelConfiguration;
 	private final Map<RedisNode, RedisSentinelConnection> connectionCache = new ConcurrentHashMap<>();
@@ -104,18 +108,23 @@ public abstract class AbstractRedisConnection implements DefaultedRedisConnectio
 	@Override
 	public void close() throws DataAccessException {
 
-		if (!connectionCache.isEmpty()) {
-			for (RedisNode node : connectionCache.keySet()) {
-				RedisSentinelConnection connection = connectionCache.remove(node);
-				if (connection.isOpen()) {
-					try {
-						connection.close();
-					} catch (IOException e) {
-						throw new RedisSystemException("Failed to close sentinel connection", e);
-					}
-				}
+		if (connectionCache.isEmpty()) {
+			return;
+		}
+
+		for (RedisNode node : connectionCache.keySet()) {
+
+			RedisSentinelConnection connection = connectionCache.remove(node);
+
+			if (!connection.isOpen()) {
+				continue;
+			}
+
+			try {
+				connection.close();
+			} catch (IOException e) {
+				LOGGER.info("Failed to close sentinel connection", e);
 			}
 		}
 	}
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.springframework.data.redis.core.convert;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.redis.core.convert.ConversionTestEntities.*;
+
+import lombok.AllArgsConstructor;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -696,11 +698,14 @@ class MappingRedisConverterUnitTests {
 		assertThat(write(rand)).containsEntry("zoneId", "Europe/Paris");
 	}
 
-	@Test // DATAREDIS-425
+	@Test // DATAREDIS-425, GH-2307
 	void readsZoneIdValuesCorrectly() {
 
-		Person target = converter.read(Person.class,
-				new RedisData(Bucket.newBucketFromStringMap(Collections.singletonMap("zoneId", "Europe/Paris"))));
+		Map<String, String> map = new HashMap<>();
+		map.put("zoneId", "Europe/Paris");
+		map.put("zoneId._class", "java.time.ZoneRegion");
+
+		Person target = converter.read(Person.class, new RedisData(Bucket.newBucketFromStringMap(map)));
 
 		assertThat(target.zoneId).isEqualTo(ZoneId.of("Europe/Paris"));
 	}
@@ -1790,7 +1795,6 @@ class MappingRedisConverterUnitTests {
 	@Test // DATAREDIS-471
 	void writeShouldThrowExceptionForUpdateValueInCollectionNotAssignableToDomainTypeProperty() {
 
-
 		PartialUpdate<Person> update = new PartialUpdate<>("123", Person.class) //
 				.set("coworkers", Collections.singletonList("foo"));
 
@@ -1923,12 +1927,44 @@ class MappingRedisConverterUnitTests {
 		assertThat(target.getAccountName()).isEqualTo("Golam Mazid Sajib");
 	}
 
+	@Test // GH-2349
+	void writeGenericEntity() {
+
+		WithGenericEntity<User> generic = new WithGenericEntity<>();
+		generic.entity = new User("hello");
+
+		assertThat(write(generic)).hasSize(3) //
+				.containsEntry("_class",
+						"org.springframework.data.redis.core.convert.MappingRedisConverterUnitTests$WithGenericEntity")
+				.containsEntry("entity.name", "hello") //
+				.containsEntry("entity._class",
+						"org.springframework.data.redis.core.convert.MappingRedisConverterUnitTests$User");
+	}
+
+	@Test // GH-2349
+	void readGenericEntity() {
+
+		Bucket bucket = new Bucket();
+		bucket.put("entity.name", "hello".getBytes());
+		bucket.put("entity._class",
+				"org.springframework.data.redis.core.convert.MappingRedisConverterUnitTests$User".getBytes());
+
+		RedisData redisData = new RedisData(bucket);
+		redisData.setKeyspace(KEYSPACE_ACCOUNT);
+		redisData.setId("ai-id-1");
+
+		WithGenericEntity<User> generic = converter.read(WithGenericEntity.class, redisData);
+
+		assertThat(generic.entity).isNotNull();
+		assertThat(generic.entity.name).isEqualTo("hello");
+	}
+
 	@Test // DATAREDIS-1175
 	@EnabledOnJre(JRE.JAVA_8)
 	// FIXME: https://github.com/spring-projects/spring-data-redis/issues/2168
 	void writePlainList() {
 
-		List<Object> source =  Arrays.asList("Hello", "stream", "message", 100L);
+		List<Object> source = Arrays.asList("Hello", "stream", "message", 100L);
 		RedisTestData target = write(source);
 
 		assertThat(target).containsEntry("[0]", "Hello") //
@@ -2079,6 +2115,15 @@ class MappingRedisConverterUnitTests {
 			accountInfo.setAccountName(values[2]);
 			return accountInfo;
 		}
+	}
+
+	static class WithGenericEntity<T> {
+		T entity;
+	}
+
+	@AllArgsConstructor
+	static class User {
+		String name;
 	}
 
 }

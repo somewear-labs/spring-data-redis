@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import org.springframework.lang.Nullable;
  * @author Andrey Shlykov
  * @author dengliming
  * @author ihaohong
+ * @author Dennis Neufeld
  * @since 2.0
  */
 public interface DefaultedRedisConnection extends RedisConnection {
@@ -1635,8 +1636,22 @@ public interface DefaultedRedisConnection extends RedisConnection {
 	/** @deprecated in favor of {@link RedisConnection#serverCommands()}. */
 	@Override
 	@Deprecated
+	default void flushDb(FlushOption option) {
+		serverCommands().flushDb(option);
+	}
+
+	/** @deprecated in favor of {@link RedisConnection#serverCommands()}. */
+	@Override
+	@Deprecated
 	default void flushAll() {
 		serverCommands().flushAll();
+	}
+
+	/** @deprecated in favor of {@link RedisConnection#serverCommands()}. */
+	@Override
+	@Deprecated
+	default void flushAll(FlushOption option) {
+		serverCommands().flushAll(option);
 	}
 
 	/** @deprecated in favor of {@link RedisConnection#serverCommands()}. */

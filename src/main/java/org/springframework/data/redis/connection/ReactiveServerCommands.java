@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 import org.springframework.data.redis.core.types.RedisClientInfo;
 
 /**
@@ -28,6 +29,7 @@ import org.springframework.data.redis.core.types.RedisClientInfo;
  *
  * @author Mark Paluch
  * @author Christoph Strobl
+ * @author Dennis Neufeld
  * @since 2.0
  */
 public interface ReactiveServerCommands {
@@ -82,12 +84,32 @@ public interface ReactiveServerCommands {
 	Mono<String> flushDb();
 
 	/**
+	 * Delete all keys of the currently selected database using the specified {@link FlushOption}.
+	 *
+	 * @param option
+	 * @return {@link Mono} indicating command completion.
+	 * @see <a href="https://redis.io/commands/flushdb">Redis Documentation: FLUSHDB</a>
+	 * @since 2.7
+	 */
+	Mono<String> flushDb(FlushOption option);
+
+	/**
 	 * Delete all <b>all keys</b> from <b>all databases</b>.
 	 *
 	 * @return {@link Mono} indicating command completion.
 	 * @see <a href="https://redis.io/commands/flushall">Redis Documentation: FLUSHALL</a>
 	 */
 	Mono<String> flushAll();
+
+	/**
+	 * Delete all <b>all keys</b> from <b>all databases</b> using the specified {@link FlushOption}.
+	 *
+	 * @param option
+	 * @return {@link Mono} indicating command completion.
+	 * @see <a href="https://redis.io/commands/flushall">Redis Documentation: FLUSHALL</a>
+	 * @since 2.7
+	 */
+	Mono<String> flushAll(FlushOption option);
 
 	/**
 	 * Load {@literal default} server information like

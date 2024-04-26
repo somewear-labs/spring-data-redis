@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,11 @@ class LettuceStreamCommands implements RedisStreamCommands {
 		if (options.hasMaxlen()) {
 			args.maxlen(options.getMaxlen());
 		}
+		if (options.hasMinId()) {
+			args.minId(options.getMinId().toString());
+		}
 		args.nomkstream(options.isNoMkStream());
+		args.approximateTrimming(options.isApproximateTrimming());
 
 		return connection.invoke().from(RedisStreamAsyncCommands::xadd, record.getStream(), args, record.getValue())
 				.get(RecordId::of);

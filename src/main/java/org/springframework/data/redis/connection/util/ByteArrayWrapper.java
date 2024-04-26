@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.springframework.data.redis.connection.util;
 
 import java.util.Arrays;
 
+import org.springframework.lang.Nullable;
+
 /**
  * Simple wrapper class used for wrapping arrays so they can be used as keys inside maps.
  *
@@ -32,7 +34,7 @@ public class ByteArrayWrapper {
 		this.hashCode = Arrays.hashCode(array);
 	}
 
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if (obj instanceof ByteArrayWrapper) {
 			return Arrays.equals(array, ((ByteArrayWrapper) obj).array);
 		}

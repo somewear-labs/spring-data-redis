@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 the original author or authors.
+ * Copyright 2016-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ class LettuceReactiveHashCommands implements ReactiveHashCommands {
 			if (command.getFields().size() == 1) {
 				ByteBuffer key = command.getFields().iterator().next();
 				result = cmd.hget(command.getKey(), key.duplicate()).map(value -> KeyValue.fromNullable(key, value))
-						.map(Collections::singletonList).onErrorReturn(Collections.emptyList());
+						.defaultIfEmpty(KeyValue.empty(key)).map(Collections::singletonList);
 			} else {
 				result = cmd.hmget(command.getKey(), command.getFields().stream().toArray(ByteBuffer[]::new)).collectList();
 			}

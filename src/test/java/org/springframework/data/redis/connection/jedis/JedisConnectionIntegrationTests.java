@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.springframework.data.redis.connection.jedis;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import redis.clients.jedis.JedisPoolConfig;
 
@@ -47,6 +48,7 @@ import org.springframework.data.redis.connection.StringRedisConnection.StringTup
 import org.springframework.data.redis.test.condition.EnabledOnRedisSentinelAvailable;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Integration test of {@link JedisConnection}
@@ -338,6 +340,31 @@ public class JedisConnectionIntegrationTests extends AbstractConnectionIntegrati
 		// Make sure we don't end up with broken connection
 		factory2.getConnection().dbSize();
 		factory2.destroy();
+	}
+
+	@Test // GH-2356
+	void closeWithFailureShouldReleaseConnection() {
+
+		JedisPoolConfig config = new JedisPoolConfig();
+		config.setMaxTotal(1);
+
+		JedisConnectionFactory factory = new JedisConnectionFactory(config);
+		factory.setUsePool(true);
+		factory.setHostName(SettingsUtils.getHost());
+		factory.setPort(SettingsUtils.getPort());
+		factory.afterPropertiesSet();
+
+		RedisConnection conn = factory.getConnection();
+
+		JedisSubscription subscriptionMock = mock(JedisSubscription.class);
+		doThrow(new IllegalStateException()).when(subscriptionMock).close();
+		ReflectionTestUtils.setField(conn, "subscription", subscriptionMock);
+
+		conn.close();
+
+		// Make sure we don't end up with broken connection
+		factory.getConnection().dbSize();
+		factory.destroy();
 	}
 
 	@SuppressWarnings("unchecked")

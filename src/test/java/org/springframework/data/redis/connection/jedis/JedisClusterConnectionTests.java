@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,11 +61,11 @@ import org.springframework.data.redis.connection.RedisClusterNode;
 import org.springframework.data.redis.connection.RedisClusterNode.SlotRange;
 import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
 import org.springframework.data.redis.connection.RedisNode;
+import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 import org.springframework.data.redis.connection.RedisStringCommands.BitOperation;
 import org.springframework.data.redis.connection.RedisStringCommands.SetOption;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.connection.ValueEncoding.RedisValueEncoding;
-import org.springframework.data.redis.connection.RedisListCommands.*;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.script.DigestUtils;
@@ -79,6 +79,7 @@ import org.springframework.data.redis.test.util.HexStringUtils;
  * @author Christoph Strobl
  * @author Mark Paluch
  * @author Pavel Khokhlov
+ * @author Dennis Neufeld
  */
 @EnabledOnRedisClusterAvailable
 @ExtendWith(JedisExtension.class)
@@ -456,6 +457,30 @@ public class JedisClusterConnectionTests implements ClusterConnectionTests {
 		assertThat(nativeConnection.get(KEY_2)).isNull();
 	}
 
+	@Test // GH-2187
+	public void flushDbSyncOnSingleNodeShouldFlushOnlyGivenNodesDb() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushDb(new RedisClusterNode("127.0.0.1", 7379, SlotRange.empty()), FlushOption.SYNC);
+
+		assertThat(nativeConnection.get(KEY_1)).isNotNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushDbAsyncOnSingleNodeShouldFlushOnlyGivenNodesDb() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushDb(new RedisClusterNode("127.0.0.1", 7379, SlotRange.empty()), FlushOption.ASYNC);
+
+		assertThat(nativeConnection.get(KEY_1)).isNotNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
 	@Test // DATAREDIS-315
 	public void flushDbShouldFlushAllClusterNodes() {
 
@@ -463,6 +488,102 @@ public class JedisClusterConnectionTests implements ClusterConnectionTests {
 		nativeConnection.set(KEY_2, VALUE_2);
 
 		clusterConnection.flushDb();
+
+		assertThat(nativeConnection.get(KEY_1)).isNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushDbSyncShouldFlushAllClusterNodes() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushDb(FlushOption.SYNC);
+
+		assertThat(nativeConnection.get(KEY_1)).isNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushDbAsyncShouldFlushAllClusterNodes() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushDb(FlushOption.ASYNC);
+
+		assertThat(nativeConnection.get(KEY_1)).isNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushAllOnSingleNodeShouldFlushOnlyGivenNodesDb() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushAll(new RedisClusterNode("127.0.0.1", 7379, SlotRange.empty()));
+
+		assertThat(nativeConnection.get(KEY_1)).isNotNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushAllSyncOnSingleNodeShouldFlushOnlyGivenNodesDb() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushAll(new RedisClusterNode("127.0.0.1", 7379, SlotRange.empty()), FlushOption.SYNC);
+
+		assertThat(nativeConnection.get(KEY_1)).isNotNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushAllAsyncOnSingleNodeShouldFlushOnlyGivenNodesDb() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushAll(new RedisClusterNode("127.0.0.1", 7379, SlotRange.empty()), FlushOption.ASYNC);
+
+		assertThat(nativeConnection.get(KEY_1)).isNotNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushAllShouldFlushAllClusterNodes() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushAll();
+
+		assertThat(nativeConnection.get(KEY_1)).isNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushAllSyncShouldFlushAllClusterNodes() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushAll(FlushOption.SYNC);
+
+		assertThat(nativeConnection.get(KEY_1)).isNull();
+		assertThat(nativeConnection.get(KEY_2)).isNull();
+	}
+
+	@Test // GH-2187
+	public void flushAllAsyncShouldFlushAllClusterNodes() {
+
+		nativeConnection.set(KEY_1, VALUE_1);
+		nativeConnection.set(KEY_2, VALUE_2);
+
+		clusterConnection.flushAll(FlushOption.ASYNC);
 
 		assertThat(nativeConnection.get(KEY_1)).isNull();
 		assertThat(nativeConnection.get(KEY_2)).isNull();
@@ -1906,13 +2027,18 @@ public class JedisClusterConnectionTests implements ClusterConnectionTests {
 
 		nativeConnection.lpush(KEY_1, VALUE_2, VALUE_1);
 
-		assertThat(clusterConnection.sort(KEY_1_BYTES, new DefaultSortParameters().alpha(), KEY_2_BYTES)).isEqualTo(1L);
+		assertThat(clusterConnection.sort(KEY_1_BYTES, new DefaultSortParameters().alpha(), KEY_2_BYTES)).isEqualTo(2L);
 		assertThat(nativeConnection.exists(KEY_2_BYTES)).isTrue();
 	}
 
-	@Test // DATAREDIS-315
-	public void sortAndStoreShouldReturnZeroWhenListDoesNotExist() {
-		assertThat(clusterConnection.sort(KEY_1_BYTES, new DefaultSortParameters().alpha(), KEY_2_BYTES)).isEqualTo(0L);
+	@Test // DATAREDIS-315, GH-2341
+	public void sortAndStoreShouldReplaceDestinationList() {
+
+		nativeConnection.lpush(KEY_1, VALUE_2, VALUE_1);
+		nativeConnection.lpush(KEY_2_BYTES, VALUE_3_BYTES);
+
+		assertThat(clusterConnection.sort(KEY_1_BYTES, new DefaultSortParameters().alpha(), KEY_2_BYTES)).isEqualTo(2L);
+		assertThat(nativeConnection.llen(KEY_2_BYTES)).isEqualTo(2);
 	}
 
 	@Test // DATAREDIS-315
@@ -2150,6 +2276,9 @@ public class JedisClusterConnectionTests implements ClusterConnectionTests {
 	@EnabledOnCommand("BZPOPMIN")
 	public void bzPopMinShouldWorkCorrectly() {
 
+		assertThat(clusterConnection.bZPopMin(KEY_1_BYTES, 10, TimeUnit.MILLISECONDS))
+				.isNull();
+
 		nativeConnection.zadd(KEY_1_BYTES, 10D, VALUE_1_BYTES);
 		nativeConnection.zadd(KEY_1_BYTES, 20D, VALUE_2_BYTES);
 		nativeConnection.zadd(KEY_1_BYTES, 30D, VALUE_3_BYTES);
@@ -2174,6 +2303,9 @@ public class JedisClusterConnectionTests implements ClusterConnectionTests {
 	@Test // GH-2007
 	@EnabledOnCommand("BZPOPMAX")
 	public void bzPopMaxShouldWorkCorrectly() {
+
+		assertThat(clusterConnection.bZPopMax(KEY_1_BYTES, 10, TimeUnit.MILLISECONDS))
+				.isNull();
 
 		nativeConnection.zadd(KEY_1_BYTES, 10D, VALUE_1_BYTES);
 		nativeConnection.zadd(KEY_1_BYTES, 20D, VALUE_2_BYTES);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ public class LettuceSubscription extends AbstractSubscription {
 
 		this.connection = pubsubConnection;
 		this.listener = new LettuceMessageListener(listener,
-				listener instanceof SubscriptionListener ? (SubscriptionListener) listener : SubscriptionListener.NO_OP_SUBSCRIPTION_LISTENER);
+				listener instanceof SubscriptionListener ? (SubscriptionListener) listener
+						: SubscriptionListener.NO_OP_SUBSCRIPTION_LISTENER);
 		this.connectionProvider = connectionProvider;
 		this.pubsub = connection.sync();
 		this.pubSubAsync = connection.async();

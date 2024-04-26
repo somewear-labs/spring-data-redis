@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
@@ -63,6 +65,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.data.redis.ExceptionTranslationStrategy;
 import org.springframework.data.redis.FallbackExceptionTranslationStrategy;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.*;
 import org.springframework.data.redis.connection.convert.TransactionResultConverter;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionProvider.TargetAware;
@@ -89,6 +92,8 @@ import org.springframework.util.ObjectUtils;
  * @author ihaohong
  */
 public class LettuceConnection extends AbstractRedisConnection {
+
+	private final Log LOGGER = LogFactory.getLog(getClass());
 
 	static final RedisCodec<byte[], byte[]> CODEC = ByteArrayCodec.INSTANCE;
 
@@ -413,7 +418,7 @@ public class LettuceConnection extends AbstractRedisConnection {
 	 * @see org.springframework.data.redis.connection.AbstractRedisConnection#close()
 	 */
 	@Override
-	public void close() throws DataAccessException {
+	public void close() {
 
 		super.close();
 
@@ -423,22 +428,33 @@ public class LettuceConnection extends AbstractRedisConnection {
 
 		isClosed = true;
 
+		try {
+			reset();
+		} catch (RuntimeException e) {
+			LOGGER.debug("Failed to reset connection during close", e);
+		}
+	}
+
+	private void reset() {
+
 		if (asyncDedicatedConn != null) {
 			try {
 				if (customizedDatabaseIndex()) {
 					potentiallySelectDatabase(defaultDbIndex);
 				}
 				connectionProvider.release(asyncDedicatedConn);
+				asyncDedicatedConn = null;
 			} catch (RuntimeException ex) {
 				throw convertLettuceAccessException(ex);
 			}
 		}
 
+		LettuceSubscription subscription = this.subscription;
 		if (subscription != null) {
 			if (subscription.isAlive()) {
 				subscription.doClose();
 			}
-			subscription = null;
+			this.subscription = null;
 		}
 
 		this.dbIndex = defaultDbIndex;
@@ -461,7 +477,8 @@ public class LettuceConnection extends AbstractRedisConnection {
 	public RedisClusterAsyncCommands<byte[], byte[]> getNativeConnection() {
 
 		LettuceSubscription subscription = this.subscription;
-		return (subscription != null ? subscription.getNativeConnection().async() : getAsyncConnection());
+		return (subscription != null && subscription.isAlive() ? subscription.getNativeConnection().async()
+				: getAsyncConnection());
 	}
 
 	/*
@@ -609,8 +626,8 @@ public class LettuceConnection extends AbstractRedisConnection {
 				LettuceTransactionResultConverter resultConverter = new LettuceTransactionResultConverter(
 						new LinkedList<>(txResults), exceptionConverter);
 
-				pipeline(newLettuceResult(exec, source -> resultConverter
-						.convert(LettuceConverters.transactionResultUnwrapper().convert(source))));
+				pipeline(newLettuceResult(exec,
+						source -> resultConverter.convert(LettuceConverters.transactionResultUnwrapper().convert(source))));
 				return null;
 			}
 
@@ -813,7 +830,8 @@ public class LettuceConnection extends AbstractRedisConnection {
 	@SuppressWarnings("unchecked")
 	protected StatefulRedisPubSubConnection<byte[], byte[]> switchToPubSub() {
 
-		close();
+		checkSubscription();
+		reset();
 		return connectionProvider.getConnection(StatefulRedisPubSubConnection.class);
 	}
 
@@ -987,6 +1005,10 @@ public class LettuceConnection extends AbstractRedisConnection {
 	}
 
 	protected RedisClusterAsyncCommands<byte[], byte[]> getAsyncDedicatedConnection() {
+
+		if (isClosed()) {
+			throw new RedisSystemException("Connection is closed", null);
+		}
 
 		StatefulConnection<byte[], byte[]> connection = getOrCreateDedicatedConnection();
 
@@ -1162,11 +1184,11 @@ public class LettuceConnection extends AbstractRedisConnection {
 			COMMAND_OUTPUT_TYPE_MAPPING.put(DECR, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(DECRBY, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(DEL, IntegerOutput.class);
-			COMMAND_OUTPUT_TYPE_MAPPING.put(COPY, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(GETBIT, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(HDEL, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(HINCRBY, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(HLEN, IntegerOutput.class);
+			COMMAND_OUTPUT_TYPE_MAPPING.put(HSTRLEN, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(INCR, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(INCRBY, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(LINSERT, IntegerOutput.class);
@@ -1189,7 +1211,10 @@ public class LettuceConnection extends AbstractRedisConnection {
 			COMMAND_OUTPUT_TYPE_MAPPING.put(SUNIONSTORE, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(STRLEN, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(TTL, IntegerOutput.class);
+			COMMAND_OUTPUT_TYPE_MAPPING.put(XLEN, IntegerOutput.class);
+			COMMAND_OUTPUT_TYPE_MAPPING.put(XTRIM, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(ZADD, IntegerOutput.class);
+			COMMAND_OUTPUT_TYPE_MAPPING.put(ZCARD, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(ZCOUNT, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(ZINTERSTORE, IntegerOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(ZRANK, IntegerOutput.class);
@@ -1205,7 +1230,6 @@ public class LettuceConnection extends AbstractRedisConnection {
 			// DOUBLE
 			COMMAND_OUTPUT_TYPE_MAPPING.put(HINCRBYFLOAT, DoubleOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(INCRBYFLOAT, DoubleOutput.class);
-			COMMAND_OUTPUT_TYPE_MAPPING.put(MGET, ValueListOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(ZINCRBY, DoubleOutput.class);
 			COMMAND_OUTPUT_TYPE_MAPPING.put(ZSCORE, DoubleOutput.class);
 
@@ -1592,7 +1616,7 @@ public class LettuceConnection extends AbstractRedisConnection {
 		}
 
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(@Nullable Object o) {
 
 			if (this == o) {
 				return true;

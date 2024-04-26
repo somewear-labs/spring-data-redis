@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ class JedisClusterConnectionUnitTests {
 		verify(con2Mock, times(1)).clusterReplicate(CLUSTER_NODE_1.getId());
 		verify(con1Mock, atMost(1)).clusterNodes();
 		verify(con1Mock, atMost(1)).close();
-		verifyZeroInteractions(con1Mock);
+		verifyNoMoreInteractions(con1Mock);
 	}
 
 	@Test // DATAREDIS-315
@@ -232,7 +232,7 @@ class JedisClusterConnectionUnitTests {
 		int[] slots = new int[] { 9000, 10000 };
 		connection.clusterDeleteSlots(CLUSTER_NODE_2, slots);
 
-		verify(con2Mock, times(1)).clusterDelSlots((int[]) anyVararg());
+		verify(con2Mock, times(1)).clusterDelSlots((int[]) any());
 	}
 
 	@Test // DATAREDIS-315

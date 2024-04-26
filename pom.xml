@@ -5,29 +5,44 @@
 
 	<groupId>org.springframework.data</groupId>
 	<artifactId>spring-data-redis</artifactId>
-	<version>2.6.1-SW</version>
+	<version>2.7.18-SW</version>
 
 	<name>Spring Data Redis</name>
+	<description>Spring Data module for Redis</description>
+	<url>https://spring.io/projects/spring-data-redis</url>
 
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
 		<artifactId>spring-data-parent</artifactId>
-		<version>2.6.0</version>
+		<version>2.7.18</version>
 	</parent>
 
 	<properties>
-		<springdata.keyvalue>2.6.0</springdata.keyvalue>
+		<springdata.keyvalue>2.7.18</springdata.keyvalue>
 		<awaitility>4.0.2</awaitility>
 		<jta>1.1</jta>
-		<beanutils>1.9.2</beanutils>
-		<xstream>1.4.18</xstream>
-		<pool>2.9.0</pool>
-		<lettuce>6.1.5.RELEASE</lettuce>
-		<jedis>3.7.0</jedis>
+		<beanutils>1.9.4</beanutils>
+		<xstream>1.4.20</xstream>
+		<mockito>4.11.0</mockito>
+		<pool>2.11.1</pool>
+		<lettuce>6.1.10.RELEASE</lettuce>
+		<jedis>3.8.0</jedis>
 		<multithreadedtc>1.01</multithreadedtc>
-		<netty>4.1.68.Final</netty>
+		<netty>4.1.79.Final</netty>
 		<java-module-name>spring.data.redis</java-module-name>
+		<mockk>1.13.3</mockk>
 	</properties>
+
+	<scm>
+		<connection>scm:git:https://github.com/spring-projects/spring-data-redis.git</connection>
+		<developerConnection>scm:git:git@github.com:spring-projects/spring-data-redis.git</developerConnection>
+		<url>https://github.com/spring-projects/spring-data-redis</url>
+	</scm>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/spring-projects/spring-data-redis/issues</url>
+	</issueManagement>
 
 	<dependencyManagement>
 		<dependencies>
@@ -212,7 +227,7 @@
 
 		<dependency>
 			<groupId>io.mockk</groupId>
-			<artifactId>mockk</artifactId>
+			<artifactId>mockk-jvm</artifactId>
 			<version>${mockk}</version>
 			<scope>test</scope>
 		</dependency>
@@ -303,19 +318,17 @@
 		</plugins>
 	</build>
 
-	<repositories>
-		<repository>
-			<id>spring-libs-release</id>
-			<url>https://repo.spring.io/libs-release</url>
-		</repository>
-	</repositories>
+	<profiles>
+		<profile>
+			<!-- placeholder for no profile -->
+			<id>none</id>
+		</profile>
+	</profiles>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>spring-plugins-release</id>
-			<url>https://repo.spring.io/plugins-release</url>
-		</pluginRepository>
-	</pluginRepositories>
+	<repositories>
+
+
+	</repositories>
 
 	<distributionManagement>
 		<repository>

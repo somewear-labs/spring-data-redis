@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import org.springframework.data.redis.connection.ClusterCommandExecutor;
 import org.springframework.data.redis.connection.ClusterNodeResourceProvider;
 import org.springframework.data.redis.connection.ClusterTopologyProvider;
@@ -163,7 +162,7 @@ class LettuceClusterConnectionUnitTests {
 		connection.clusterForget(CLUSTER_NODE_2);
 
 		verify(clusterConnection1Mock, times(1)).clusterForget(CLUSTER_NODE_2.getId());
-		verifyZeroInteractions(clusterConnection2Mock);
+		verifyNoInteractions(clusterConnection2Mock);
 		verify(clusterConnection3Mock, times(1)).clusterForget(CLUSTER_NODE_2.getId());
 	}
 
@@ -173,7 +172,7 @@ class LettuceClusterConnectionUnitTests {
 		connection.clusterReplicate(CLUSTER_NODE_1, CLUSTER_NODE_2);
 
 		verify(clusterConnection2Mock, times(1)).clusterReplicate(CLUSTER_NODE_1.getId());
-		verifyZeroInteractions(clusterConnection1Mock);
+		verifyNoInteractions(clusterConnection1Mock);
 	}
 
 	@Test // DATAREDIS-315
@@ -307,7 +306,7 @@ class LettuceClusterConnectionUnitTests {
 		int[] slots = new int[] { 9000, 10000 };
 		connection.clusterDeleteSlots(CLUSTER_NODE_2, slots);
 
-		verify(clusterConnection2Mock, times(1)).clusterDelSlots((int[]) any());
+		verify(clusterConnection2Mock, times(1)).clusterDelSlots(any(int[].class));
 	}
 
 	@Test // DATAREDIS-315
@@ -334,7 +333,7 @@ class LettuceClusterConnectionUnitTests {
 		connection.time(CLUSTER_NODE_2);
 
 		verify(clusterConnection2Mock, times(1)).time();
-		verifyZeroInteractions(clusterConnection1Mock, clusterConnection3Mock);
+		verifyNoInteractions(clusterConnection1Mock, clusterConnection3Mock);
 	}
 
 	@Test // DATAREDIS-315
@@ -412,6 +411,6 @@ class LettuceClusterConnectionUnitTests {
 		verify(async).blpop(1, KEY_1_BYTES);
 		verify(connectionProviderMock).getConnection(StatefulConnection.class);
 		verifyNoMoreInteractions(connectionProviderMock);
-		verifyZeroInteractions(sharedConnectionMock);
+		verifyNoInteractions(sharedConnectionMock);
 	}
 }

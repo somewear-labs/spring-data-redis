@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ public interface BoundZSetOperations<K, V> extends BoundKeyOperations<K> {
 	/**
 	 * Add {@code value} to a sorted set at the bound key, or update its {@code score} if it already exists.
 	 *
-	 * @param score the score.
 	 * @param value the value.
+	 * @param score the score.
 	 * @return {@literal null} when used in pipeline / transaction.
 	 * @see <a href="https://redis.io/commands/zadd">Redis Documentation: ZADD</a>
 	 */
@@ -56,8 +56,8 @@ public interface BoundZSetOperations<K, V> extends BoundKeyOperations<K> {
 	/**
 	 * Add {@code value} to a sorted set at the bound key if it does not already exists.
 	 *
-	 * @param score the score.
 	 * @param value the value.
+	 * @param score the score.
 	 * @return {@literal null} when used in pipeline / transaction.
 	 * @since 2.5
 	 * @see <a href="https://redis.io/commands/zadd">Redis Documentation: ZADD NX</a>
@@ -99,8 +99,8 @@ public interface BoundZSetOperations<K, V> extends BoundKeyOperations<K> {
 	/**
 	 * Increment the score of element with {@code value} in sorted set by {@code increment}.
 	 *
-	 * @param delta
 	 * @param value the value.
+	 * @param delta the delta to add. Can be negative.
 	 * @return {@literal null} when used in pipeline / transaction.
 	 * @see <a href="https://redis.io/commands/zincrby">Redis Documentation: ZINCRBY</a>
 	 */
@@ -119,7 +119,7 @@ public interface BoundZSetOperations<K, V> extends BoundKeyOperations<K> {
 	/**
 	 * Get {@code count} distinct random elements from set at the bound key.
 	 *
-	 * @param count nr of members to return
+	 * @param count number of members to return.
 	 * @return empty {@link Set} if {@code key} does not exist.
 	 * @throws IllegalArgumentException if count is negative.
 	 * @since 2.6
@@ -131,7 +131,7 @@ public interface BoundZSetOperations<K, V> extends BoundKeyOperations<K> {
 	/**
 	 * Get {@code count} random elements from set at the bound key.
 	 *
-	 * @param count nr of members to return.
+	 * @param count number of members to return.
 	 * @return empty {@link List} if {@code key} does not exist or {@literal null} when used in pipeline / transaction.
 	 * @throws IllegalArgumentException if count is negative.
 	 * @since 2.6
@@ -152,7 +152,7 @@ public interface BoundZSetOperations<K, V> extends BoundKeyOperations<K> {
 	/**
 	 * Get {@code count} distinct random elements with their score from set at the bound key.
 	 *
-	 * @param count nr of members to return
+	 * @param count number of members to return.
 	 * @return empty {@link Set} if {@code key} does not exist.
 	 * @throws IllegalArgumentException if count is negative.
 	 * @since 2.6
@@ -164,7 +164,7 @@ public interface BoundZSetOperations<K, V> extends BoundKeyOperations<K> {
 	/**
 	 * Get {@code count} random elements with their score from set at the bound key.
 	 *
-	 * @param count nr of members to return.
+	 * @param count number of members to return.
 	 * @return empty {@link List} if {@code key} does not exist or {@literal null} when used in pipeline / transaction.
 	 * @throws IllegalArgumentException if count is negative.
 	 * @since 2.6
@@ -794,11 +794,12 @@ public interface BoundZSetOperations<K, V> extends BoundKeyOperations<K> {
 	Long unionAndStore(Collection<K> otherKeys, K destKey, Aggregate aggregate);
 
 	/**
-	 * Iterate over elements in zset at the bound key. <br />
-	 * <strong>Important:</strong> Call {@link Cursor#close()} when done to avoid resource leak.
+	 * Use a {@link Cursor} to iterate over entries in zset at the bound key. <br />
+	 * <strong>Important:</strong> Call {@link Cursor#close()} when done to avoid resource leaks.
 	 *
-	 * @param options
-	 * @return
+	 * @param options must not be {@literal null}.
+	 * @return the result cursor providing access to the scan result. Must be closed once fully processed (e.g. through a
+	 *         try-with-resources clause).
 	 * @since 1.4
 	 */
 	Cursor<TypedTuple<V>> scan(ScanOptions options);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -305,13 +305,6 @@ public class DefaultReactiveValueOperationsIntegrationTests<K, V> {
 		V value1 = valueFactory.instance();
 		V value2 = valueFactory.instance();
 		V absentValue = null;
-
-		if (serializer instanceof StringRedisSerializer) {
-			absentValue = (V) "";
-		}
-		if (value1 instanceof ByteBuffer) {
-			absentValue = (V) ByteBuffer.wrap(new byte[0]);
-		}
 
 		Map<K, V> map = new LinkedHashMap<>();
 		map.put(key1, value1);

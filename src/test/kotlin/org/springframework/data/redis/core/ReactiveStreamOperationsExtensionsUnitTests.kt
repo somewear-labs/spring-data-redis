@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -490,6 +490,21 @@ class ReactiveStreamOperationsExtensionsUnitTests {
 
 		verify {
 			operations.trim("foo", 1)
+		}
+	}
+
+	@Test // GH-2227
+	fun trimApproximate() {
+
+		val operations = mockk<ReactiveStreamOperations<String, String, String>>()
+		every { operations.trim(any(), any(), any()) } returns Mono.just(1)
+
+		runBlocking {
+			assertThat(operations.trimAndAwait("foo", 1, true)).isEqualTo(1)
+		}
+
+		verify {
+			operations.trim("foo", 1, true)
 		}
 	}
 }

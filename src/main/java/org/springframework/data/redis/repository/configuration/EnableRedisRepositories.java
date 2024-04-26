@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,6 +166,16 @@ public @interface EnableRedisRepositories {
 	 * @since 1.8
 	 */
 	EnableKeyspaceEvents enableKeyspaceEvents() default EnableKeyspaceEvents.OFF;
+
+	/**
+	 * Configure the name of the {@link org.springframework.data.redis.listener.RedisMessageListenerContainer} bean to be
+	 * used for keyspace event subscriptions. Defaults to use an anonymous managed instance by
+	 * {@link org.springframework.data.redis.core.RedisKeyValueAdapter}.
+	 *
+	 * @return
+	 * @since 2.7.2
+	 */
+	String messageListenerContainerRef() default "";
 
 	/**
 	 * Configuration flag controlling storage of phantom keys (shadow copies) of expiring entities to read them later when

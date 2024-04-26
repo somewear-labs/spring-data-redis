@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.junit.jupiter.api.BeforeEach;
 
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.SyncTaskExecutor;
-import org.springframework.data.redis.SettingsUtils;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.connection.jedis.extension.JedisConnectionFactoryExtension;
@@ -76,9 +75,6 @@ public class PubSubResubscribeTests {
 	}
 
 	public static Collection<Object[]> testParams() {
-
-		int port = SettingsUtils.getPort();
-		String host = SettingsUtils.getHost();
 
 		List<RedisConnectionFactory> factories = new ArrayList<>(3);
 
@@ -214,12 +210,10 @@ public class PubSubResubscribeTests {
 		container.stop();
 
 		String uniqueChannel = "random-" + UUID.randomUUID();
-		PubSubAwaitUtil.runAndAwaitPatternSubscription(template.getConnectionFactory(), () -> {
 
-			container.addMessageListener(adapter,
-					Arrays.asList(new Topic[] { new ChannelTopic(uniqueChannel), new PatternTopic("s*") }));
-			container.start();
-		});
+		container.addMessageListener(adapter,
+				Arrays.asList(new Topic[] { new ChannelTopic(uniqueChannel), new PatternTopic("s*") }));
+		container.start();
 
 		// timing: There's currently no other way to synchronize
 		// than to hope the subscribe/unsubscribe are executed within the time.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,15 +199,20 @@ public interface ReactiveStreamCommands {
 	class AddStreamRecord extends KeyCommand {
 
 		private final ByteBufferRecord record;
-		private final @Nullable Long maxlen;
 		private final boolean nomkstream;
+		private final @Nullable Long maxlen;
+		private final boolean approximateTrimming;
+		private final @Nullable RecordId minId;
 
-		private AddStreamRecord(ByteBufferRecord record, @Nullable Long maxlen, boolean nomkstream) {
+		private AddStreamRecord(ByteBufferRecord record, @Nullable Long maxlen, boolean nomkstream,
+				boolean approximateTrimming, @Nullable RecordId minId) {
 
 			super(record.getStream());
 			this.record = record;
 			this.maxlen = maxlen;
 			this.nomkstream = nomkstream;
+			this.approximateTrimming = approximateTrimming;
+			this.minId = minId;
 		}
 
 		/**
@@ -220,7 +225,7 @@ public interface ReactiveStreamCommands {
 
 			Assert.notNull(record, "Record must not be null!");
 
-			return new AddStreamRecord(record, null, false);
+			return new AddStreamRecord(record, null, false, false, null);
 		}
 
 		/**
@@ -233,7 +238,7 @@ public interface ReactiveStreamCommands {
 
 			Assert.notNull(body, "Body must not be null!");
 
-			return new AddStreamRecord(StreamRecords.rawBuffer(body), null, false);
+			return new AddStreamRecord(StreamRecords.rawBuffer(body), null, false, false, null);
 		}
 
 		/**
@@ -243,16 +248,7 @@ public interface ReactiveStreamCommands {
 		 * @return a new {@link ReactiveGeoCommands.GeoAddCommand} with {@literal key} applied.
 		 */
 		public AddStreamRecord to(ByteBuffer key) {
-			return new AddStreamRecord(record.withStreamKey(key), maxlen, false);
-		}
-
-		/**
-		 * Limit the size of the stream to the given maximum number of elements.
-		 *
-		 * @return new instance of {@link AddStreamRecord}.
-		 */
-		public AddStreamRecord maxlen(long maxlen) {
-			return new AddStreamRecord(record, maxlen, false);
+			return new AddStreamRecord(record.withStreamKey(key), maxlen, nomkstream, approximateTrimming, minId);
 		}
 
 		/**
@@ -262,7 +258,7 @@ public interface ReactiveStreamCommands {
 		 * @since 2.6
 		 */
 		public AddStreamRecord makeNoStream() {
-			return new AddStreamRecord(record, maxlen, true);
+			return new AddStreamRecord(record, maxlen, true, approximateTrimming, minId);
 		}
 
 		/**
@@ -273,7 +269,36 @@ public interface ReactiveStreamCommands {
 		 * @since 2.6
 		 */
 		public AddStreamRecord makeNoStream(boolean makeNoStream) {
-			return new AddStreamRecord(record, maxlen, makeNoStream);
+			return new AddStreamRecord(record, maxlen, makeNoStream, approximateTrimming, minId);
+		}
+
+		/**
+		 * Limit the size of the stream to the given maximum number of elements.
+		 *
+		 * @return new instance of {@link AddStreamRecord}.
+		 */
+		public AddStreamRecord maxlen(long maxlen) {
+			return new AddStreamRecord(record, maxlen, nomkstream, approximateTrimming, minId);
+		}
+
+		/**
+		 * Apply {@code MINID} trimming strategy, that evicts entries with IDs lower than the one specified.
+		 *
+		 * @param minId the minimum record Id to retain.
+		 * @return new instance of {@link AddStreamRecord}.
+		 * @since 2.7
+		 */
+		public AddStreamRecord minId(RecordId minId) {
+			return new AddStreamRecord(record, maxlen, nomkstream, approximateTrimming, minId);
+		}
+
+		/**
+		 * Apply efficient trimming for capped streams using the {@code ~} flag.
+		 *
+		 * @return new instance of {@link AddStreamRecord}.
+		 */
+		public AddStreamRecord approximateTrimming(boolean approximateTrimming) {
+			return new AddStreamRecord(record, maxlen, nomkstream, approximateTrimming, minId);
 		}
 
 		/**
@@ -285,6 +310,14 @@ public interface ReactiveStreamCommands {
 
 		public ByteBufferRecord getRecord() {
 			return record;
+		}
+
+		/**
+		 * @return {@literal true} if {@literal NOMKSTREAM} is set.
+		 * @since 2.6
+		 */
+		public boolean isNoMkStream() {
+			return nomkstream;
 		}
 
 		/**
@@ -307,11 +340,28 @@ public interface ReactiveStreamCommands {
 		}
 
 		/**
-		 * @return {@literal true} if {@literal NOMKSTREAM} is set.
-		 * @since 2.6
+		 * @return {@literal true} if {@literal approximateTrimming} is set.
+		 * @since 2.7
 		 */
-		public boolean isNoMkStream() {
-			return nomkstream;
+		public boolean isApproximateTrimming() {
+			return approximateTrimming;
+		}
+
+		/**
+		 * @return the minimum record Id to retain during trimming.
+		 * @since 2.7
+		 */
+		@Nullable
+		public RecordId getMinId() {
+			return minId;
+		}
+
+		/**
+		 * @return {@literal true} if {@literal MINID} is set.
+		 * @since 2.7
+		 */
+		public boolean hasMinId() {
+			return minId != null;
 		}
 	}
 
@@ -1203,7 +1253,7 @@ public interface ReactiveStreamCommands {
 		}
 
 		public GroupCommand makeStream(boolean mkStream) {
-			return new GroupCommand(getKey(), action, groupName, consumerName, offset,mkStream);
+			return new GroupCommand(getKey(), action, groupName, consumerName, offset, mkStream);
 		}
 
 		public GroupCommand at(ReadOffset offset) {
@@ -1271,8 +1321,8 @@ public interface ReactiveStreamCommands {
 	 * @since 2.3
 	 */
 	default Mono<String> xGroupCreate(ByteBuffer key, String groupName, ReadOffset readOffset, boolean mkStream) {
-		return xGroup(Mono.just(GroupCommand.createGroup(groupName).forStream(key).at(readOffset).makeStream(mkStream))).next()
-				.map(CommandResponse::getOutput);
+		return xGroup(Mono.just(GroupCommand.createGroup(groupName).forStream(key).at(readOffset).makeStream(mkStream)))
+				.next().map(CommandResponse::getOutput);
 	}
 
 	/**

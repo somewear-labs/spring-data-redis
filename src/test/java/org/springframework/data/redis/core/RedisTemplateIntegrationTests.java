@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2021 the original author or authors.
+ * Copyright 2013-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.springframework.data.redis.core;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.*;
-import static org.springframework.data.redis.SpinBarrier.*;
+import static org.awaitility.Awaitility.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -61,6 +61,8 @@ import org.springframework.data.redis.test.util.CollectionAwareComparator;
  * @author Duobiao Ou
  * @author Mark Paluch
  * @author ihaohong
+ * @author Hendrik Duerkop
+ * @author Chen Li
  */
 @MethodSource("testParams")
 public class RedisTemplateIntegrationTests<K, V> {
@@ -123,6 +125,22 @@ public class RedisTemplateIntegrationTests<K, V> {
 		redisTemplate.opsForValue().set(key1, value1);
 		K keyPattern = key1 instanceof String ? (K) "*" : (K) "*".getBytes();
 		assertThat(redisTemplate.keys(keyPattern)).isNotNull();
+	}
+
+	@ParameterizedRedisTest // GH-2260
+	void testScan() {
+		K key1 = keyFactory.instance();
+		V value1 = valueFactory.instance();
+		assumeThat(key1 instanceof String || key1 instanceof byte[]).isTrue();
+		redisTemplate.opsForValue().set(key1, value1);
+		long count = 0;
+		try (Cursor<K> cursor = redisTemplate.scan(ScanOptions.scanOptions().count(1).build())) {
+			while (cursor.hasNext()) {
+				assertThat(cursor.next()).isEqualTo(key1);
+				count++;
+			}
+		}
+		assertThat(count).isEqualTo(1);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -617,7 +635,7 @@ public class RedisTemplateIntegrationTests<K, V> {
 		V value1 = valueFactory.instance();
 		redisTemplate.boundValueOps(key1).set(value1);
 		redisTemplate.expireAt(key1, new Date(System.currentTimeMillis() + 5L));
-		waitFor(() -> (!redisTemplate.hasKey(key1)), 5L);
+		await().until(() -> !redisTemplate.hasKey(key1));
 	}
 
 	@ParameterizedRedisTest // DATAREDIS-611
@@ -626,7 +644,7 @@ public class RedisTemplateIntegrationTests<K, V> {
 		V value1 = valueFactory.instance();
 		redisTemplate.boundValueOps(key1).set(value1);
 		redisTemplate.expireAt(key1, Instant.now().plus(5, ChronoUnit.MILLIS));
-		waitFor(() -> (!redisTemplate.hasKey(key1)), 5L);
+		await().until(() -> !redisTemplate.hasKey(key1));
 	}
 
 	@ParameterizedRedisTest
@@ -644,19 +662,7 @@ public class RedisTemplateIntegrationTests<K, V> {
 		template2.boundValueOps((String) key1).set((String) value1);
 		template2.expireAt((String) key1, new Date(System.currentTimeMillis() + 5L));
 		// Just ensure this works as expected, pExpireAt just adds some precision over expireAt
-		waitFor(() -> (!template2.hasKey((String) key1)), 5L);
-	}
-
-	@ParameterizedRedisTest
-	void testPersist() throws Exception {
-		// Test is meaningless in Redis 2.4 because key won't expire after 10 ms
-		K key1 = keyFactory.instance();
-		V value1 = valueFactory.instance();
-		redisTemplate.opsForValue().set(key1, value1);
-		redisTemplate.expire(key1, 10, TimeUnit.MILLISECONDS);
-		redisTemplate.persist(key1);
-		Thread.sleep(10);
-		assertThat(redisTemplate.hasKey(key1)).isTrue();
+		await().until(() -> !template2.hasKey((String) key1));
 	}
 
 	@ParameterizedRedisTest

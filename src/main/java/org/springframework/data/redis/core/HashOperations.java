@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ public interface HashOperations<H, HK, HV> {
 	HV get(H key, Object hashKey);
 
 	/**
-	 * Get values for given {@code hashKeys} from hash at {@code key}.
+	 * Get values for given {@code hashKeys} from hash at {@code key}. Values are in the order of the requested keys
+	 * Absent field values are represented using {@code null} in the resulting {@link List}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @param hashKeys must not be {@literal null}.
@@ -89,7 +90,7 @@ public interface HashOperations<H, HK, HV> {
 	Double increment(H key, HK hashKey, double delta);
 
 	/**
-	 * Return a random hash key (aka field) from the hash value stored at {@code key}.
+	 * Return a random hash key (aka field) from the hash stored at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @return {@literal null} if key does not exist or when used in pipeline / transaction.
@@ -100,7 +101,7 @@ public interface HashOperations<H, HK, HV> {
 	HK randomKey(H key);
 
 	/**
-	 * Return a random entry from the hash value stored at {@code key}.
+	 * Return a random entry from the hash stored at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @return {@literal null} if key does not exist or when used in pipeline / transaction.
@@ -111,7 +112,7 @@ public interface HashOperations<H, HK, HV> {
 	Map.Entry<HK, HV> randomEntry(H key);
 
 	/**
-	 * Return random hash keys (aka fields) from the hash value stored at {@code key}. If the provided {@code count} argument is
+	 * Return random hash keys (aka fields) from the hash stored at {@code key}. If the provided {@code count} argument is
 	 * positive, return a list of distinct hash keys, capped either at {@code count} or the hash size. If {@code count} is
 	 * negative, the behavior changes and the command is allowed to return the same hash key multiple times. In this case,
 	 * the number of returned fields is the absolute value of the specified count.
@@ -126,7 +127,7 @@ public interface HashOperations<H, HK, HV> {
 	List<HK> randomKeys(H key, long count);
 
 	/**
-	 * Return a random entries from the hash value stored at {@code key}.
+	 * Return a random entries from the hash stored at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @param count number of fields to return. Must be positive.
@@ -210,11 +211,12 @@ public interface HashOperations<H, HK, HV> {
 
 	/**
 	 * Use a {@link Cursor} to iterate over entries in hash at {@code key}. <br />
-	 * <strong>Important:</strong> Call {@link Cursor#close()} when done to avoid resource leak.
+	 * <strong>Important:</strong> Call {@link Cursor#close()} when done to avoid resource leaks.
 	 *
 	 * @param key must not be {@literal null}.
-	 * @param options
-	 * @return {@literal null} when used in pipeline / transaction.
+	 * @param options must not be {@literal null}.
+	 * @return the result cursor providing access to the scan result. Must be closed once fully processed (e.g. through a
+	 *         try-with-resources clause).
 	 * @since 1.4
 	 */
 	Cursor<Map.Entry<HK, HV>> scan(H key, ScanOptions options);

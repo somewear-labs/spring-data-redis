@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -434,7 +434,7 @@ public interface StringRedisConnection extends RedisConnection {
 	String getSet(String key, String value);
 
 	/**
-	 * Get multiple {@code keys}. Values are returned in the order of the requested keys.
+	 * Get multiple {@code keys}. Values are in the order of the requested keys.
 	 *
 	 * @param keys must not be {@literal null}.
 	 * @return
@@ -2067,7 +2067,7 @@ public interface StringRedisConnection extends RedisConnection {
 	Double hIncrBy(String key, String field, double delta);
 
 	/**
-	 * Return a random field from the hash value stored at {@code key}.
+	 * Return a random field from the hash stored at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @return {@literal null} if key does not exist or when used in pipeline / transaction.
@@ -2078,7 +2078,7 @@ public interface StringRedisConnection extends RedisConnection {
 	String hRandField(String key);
 
 	/**
-	 * Return a random field from the hash value stored at {@code key}.
+	 * Return a random field from the hash along with its value stored at {@code key}.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @return {@literal null} if key does not exist or when used in pipeline / transaction.
@@ -2089,10 +2089,10 @@ public interface StringRedisConnection extends RedisConnection {
 	Map.Entry<String, String> hRandFieldWithValues(String key);
 
 	/**
-	 * Return a random field from the hash value stored at {@code key}. If the provided {@code count} argument is
-	 * positive, return a list of distinct fields, capped either at {@code count} or the hash size. If {@code count} is
-	 * negative, the behavior changes and the command is allowed to return the same field multiple times. In this case,
-	 * the number of returned fields is the absolute value of the specified count.
+	 * Return a random field from the hash stored at {@code key}. If the provided {@code count} argument is positive,
+	 * return a list of distinct fields, capped either at {@code count} or the hash size. If {@code count} is negative,
+	 * the behavior changes and the command is allowed to return the same field multiple times. In this case, the number
+	 * of returned fields is the absolute value of the specified count.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @param count number of fields to return.
@@ -2104,10 +2104,10 @@ public interface StringRedisConnection extends RedisConnection {
 	List<String> hRandField(String key, long count);
 
 	/**
-	 * Return a random field from the hash value stored at {@code key}. If the provided {@code count} argument is
-	 * positive, return a list of distinct fields, capped either at {@code count} or the hash size. If {@code count} is
-	 * negative, the behavior changes and the command is allowed to return the same field multiple times. In this case,
-	 * the number of returned fields is the absolute value of the specified count.
+	 * Return a random field from the hash along with its value stored at {@code key}. If the provided {@code count}
+	 * argument is positive, return a list of distinct fields, capped either at {@code count} or the hash size. If
+	 * {@code count} is negative, the behavior changes and the command is allowed to return the same field multiple times.
+	 * In this case, the number of returned fields is the absolute value of the specified count.
 	 *
 	 * @param key must not be {@literal null}.
 	 * @param count number of fields to return.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import static org.junit.Assume.*;
 
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 
@@ -57,7 +59,8 @@ import org.springframework.data.redis.test.extension.parametrized.ParameterizedR
  * Integration tests for {@link DefaultReactiveStreamOperations}.
  *
  * @author Mark Paluch
- * @auhtor Christoph Strobl
+ * @author Christoph Strobl
+ * @author Marcin Zielinski
  */
 @MethodSource("testParams")
 @SuppressWarnings("unchecked")
@@ -356,6 +359,31 @@ public class DefaultReactiveStreamOperationsIntegrationTests<K, HK, HV> {
 			assertThat(pending.get(0).getConsumerName()).isEqualTo("my-consumer");
 			assertThat(pending.get(0).getTotalDeliveryCount()).isOne();
 		}).verifyComplete();
+
+	}
+
+	@ParameterizedRedisTest // GH-2465
+	void claimShouldReadMessageDetails() {
+
+		K key = keyFactory.instance();
+		HK hashKey = hashKeyFactory.instance();
+		HV value = valueFactory.instance();
+
+		Map<HK, HV> content = Collections.singletonMap(hashKey, value);
+		RecordId messageId = streamOperations.add(key, content).block();
+
+		streamOperations.createGroup(key, ReadOffset.from("0-0"), "my-group").then().as(StepVerifier::create)
+				.verifyComplete();
+
+		streamOperations.read(Consumer.from("my-group", "my-consumer"), StreamOffset.create(key, ReadOffset.lastConsumed()))
+				.then().as(StepVerifier::create).verifyComplete();
+
+		streamOperations.claim(key, "my-group", "name", Duration.ZERO, messageId).as(StepVerifier::create)
+				.assertNext(claimed -> {
+					assertThat(claimed.getStream()).isEqualTo(key);
+					assertThat(claimed.getValue()).isEqualTo(content);
+					assertThat(claimed.getId()).isEqualTo(messageId);
+				}).verifyComplete();
 
 	}
 }

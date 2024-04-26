@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package org.springframework.data.redis.serializer;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,11 +28,13 @@ import org.junit.jupiter.api.Test;
  *
  * @author Mark Paluch
  * @author Christoph Strobl
+ * @author Zhou KQ
  */
 class RedisSerializationContextUnitTests {
 
 	@Test // DATAREDIS-602
 	void shouldRejectBuildIfKeySerializerIsNotSet() {
+
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> RedisSerializationContext.<String, String> newSerializationContext() //
 				.value(StringRedisSerializer.UTF_8) //
@@ -41,6 +45,7 @@ class RedisSerializationContextUnitTests {
 
 	@Test // DATAREDIS-602
 	void shouldRejectBuildIfValueSerializerIsNotSet() {
+
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> RedisSerializationContext.<String, String> newSerializationContext() //
 				.key(StringRedisSerializer.UTF_8) //
@@ -51,6 +56,7 @@ class RedisSerializationContextUnitTests {
 
 	@Test // DATAREDIS-602
 	void shouldRejectBuildIfHashKeySerializerIsNotSet() {
+
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> RedisSerializationContext.<String, String> newSerializationContext() //
 				.key(StringRedisSerializer.UTF_8) //
@@ -61,6 +67,7 @@ class RedisSerializationContextUnitTests {
 
 	@Test // DATAREDIS-602
 	void shouldRejectBuildIfHashValueSerializerIsNotSet() {
+
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> RedisSerializationContext.<String, String> newSerializationContext() //
 				.key(StringRedisSerializer.UTF_8) //
@@ -70,10 +77,11 @@ class RedisSerializationContextUnitTests {
 	}
 
 	@Test // DATAREDIS-602
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	void shouldUseDefaultIfSet() {
 
-		RedisSerializationContext.<String, String> newSerializationContext(StringRedisSerializer.UTF_8)
-				.key(new GenericToStringSerializer(Long.class))//
+		RedisSerializationContext.<String, String>newSerializationContext(StringRedisSerializer.UTF_8)
+				.key(new GenericToStringSerializer(Long.class)) //
 				.build();
 	}
 
@@ -114,8 +122,7 @@ class RedisSerializationContextUnitTests {
 	@Test // DATAREDIS-1000
 	void shouldEncodeAndDecodeRawByteBufferValue() {
 
-		RedisSerializationContext<ByteBuffer, ByteBuffer> serializationContext = RedisSerializationContext
-				.byteBuffer();
+		RedisSerializationContext<ByteBuffer, ByteBuffer> serializationContext = RedisSerializationContext.byteBuffer();
 
 		ByteBuffer deserialized = serializationContext.getValueSerializationPair()
 				.read(serializationContext.getValueSerializationPair()
@@ -127,14 +134,43 @@ class RedisSerializationContextUnitTests {
 	@Test // DATAREDIS-1000
 	void shouldEncodeAndDecodeByteArrayValue() {
 
-		RedisSerializationContext<byte[], byte[]> serializationContext = RedisSerializationContext
-				.byteArray();
+		RedisSerializationContext<byte[], byte[]> serializationContext = RedisSerializationContext.byteArray();
 
 		byte[] deserialized = serializationContext.getValueSerializationPair()
 				.read(serializationContext.getValueSerializationPair()
 						.write("hello".getBytes()));
 
 		assertThat(deserialized).isEqualTo("hello".getBytes());
+	}
+
+	@Test // GH-2651
+	void shouldEncodeAndDecodeUtf8StringValue() {
+
+		RedisSerializationContext.SerializationPair<String> serializationPair =
+				buildStringSerializationContext(StringRedisSerializer.UTF_8).getStringSerializationPair();
+
+		assertThat(serializationPair.write("üßØ")).isEqualTo(StandardCharsets.UTF_8.encode("üßØ"));
+		assertThat(serializationPair.read(StandardCharsets.UTF_8.encode("üßØ"))).isEqualTo("üßØ");
+	}
+
+	@Test // GH-2651
+	void shouldEncodeAndDecodeAsciiStringValue() {
+
+		RedisSerializationContext.SerializationPair<String> serializationPair =
+				buildStringSerializationContext(StringRedisSerializer.US_ASCII).getStringSerializationPair();
+
+		assertThat(serializationPair.write("üßØ")).isEqualTo(StandardCharsets.US_ASCII.encode("???"));
+		assertThat(serializationPair.read(StandardCharsets.US_ASCII.encode("üßØ"))).isEqualTo("???");
+	}
+
+	@Test  // GH-2651
+	void shouldEncodeAndDecodeIso88591StringValue() {
+
+		RedisSerializationContext.SerializationPair<String> serializationPair =
+				buildStringSerializationContext(StringRedisSerializer.ISO_8859_1).getStringSerializationPair();
+
+		assertThat(serializationPair.write("üßØ")).isEqualTo(StandardCharsets.ISO_8859_1.encode("üßØ"));
+		assertThat(serializationPair.read(StandardCharsets.ISO_8859_1.encode("üßØ"))).isEqualTo("üßØ");
 	}
 
 	private RedisSerializationContext<String, Long> createSerializationContext() {
@@ -144,6 +180,14 @@ class RedisSerializationContextUnitTests {
 				.value(ByteBuffer::getLong, value -> (ByteBuffer) ByteBuffer.allocate(8).putLong(value).flip()) //
 				.hashKey(StringRedisSerializer.UTF_8) //
 				.hashValue(StringRedisSerializer.UTF_8) //
+				.build();
+	}
+
+	private RedisSerializationContext<String, String> buildStringSerializationContext(
+			RedisSerializer<String> stringSerializer) {
+
+		return RedisSerializationContext.<String, String>newSerializationContext(stringSerializer)
+				.string(stringSerializer)
 				.build();
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,15 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Immutable {@link RedisCacheConfiguration} helps customizing {@link RedisCache} behaviour such as caching
- * {@literal null} values, cache key prefixes and binary serialization. <br />
- * Start with {@link RedisCacheConfiguration#defaultCacheConfig()} and customize {@link RedisCache} behaviour from there
- * on.
+ * Immutable {@link RedisCacheConfiguration} used to customize {@link RedisCache} behaviour, such as caching
+ * {@literal null} values, computing cache key prefixes and handling binary serialization.
+ * <p>
+ * Start with {@link RedisCacheConfiguration#defaultCacheConfig()} and customize {@link RedisCache} behaviour
+ * from that point on.
  *
  * @author Christoph Strobl
  * @author Mark Paluch
+ * @author John Blum
  * @since 2.0
  */
 public class RedisCacheConfiguration {
@@ -167,7 +169,7 @@ public class RedisCacheConfiguration {
 	 * The generated cache key will be: {@code prefix + cache name + "::" + cache entry key}.
 	 *
 	 * @param prefix the prefix to prepend to the cache name.
-	 * @return this.
+	 * @return new {@link RedisCacheConfiguration}.
 	 * @see #computePrefixWith(CacheKeyPrefix)
 	 * @see CacheKeyPrefix#prefixed(String)
 	 * @since 2.3
@@ -358,7 +360,10 @@ public class RedisCacheConfiguration {
 	}
 
 	/**
-	 * Registers default cache key converters. The following converters get registered:
+	 * Registers default cache {@link Converter key converters}.
+	 * <p>
+	 * The following converters get registered:
+	 * <p>
 	 * <ul>
 	 * <li>{@link String} to {@link byte byte[]} using UTF-8 encoding.</li>
 	 * <li>{@link SimpleKey} to {@link String}</li>

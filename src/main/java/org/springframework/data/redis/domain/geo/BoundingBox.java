@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2021-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metric;
 import org.springframework.data.geo.Shape;
 import org.springframework.data.redis.connection.RedisGeoCommands;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -69,7 +70,7 @@ public class BoundingBox implements Shape {
 	 * @return will never be {@literal null}.
 	 */
 	public Distance getWidth() {
-		return height;
+		return width;
 	}
 
 	/**
@@ -93,7 +94,7 @@ public class BoundingBox implements Shape {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 		if (this == o) {
 			return true;
 		}
